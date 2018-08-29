@@ -1,0 +1,7 @@
+{
+  "name": "polymer-contacts",
+  "short_name": "polymer-contacts",
+  "description": "A simple contacts app made with Polymer 2",
+  "start_url": "/",
+  "display": "standalone"
+}

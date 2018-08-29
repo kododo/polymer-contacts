@@ -1,0 +1,95 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../../bower_components/paper-item/paper-icon-item.html">
+<link rel="import" href="../../bower_components/paper-chip/paper-chip.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+
+<dom-module id="polymer-contacts-contact">
+  <template>
+    <style include="iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+      }
+
+      .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 25px;
+        background: #00897b;
+        line-height: 50px;
+        text-align: center;
+        font-size: 1.5em;
+        color: #fff;
+      }
+
+      paper-item-body {
+        margin-left: 10px;
+      }
+
+      .chip-container {
+        height: 0px;
+        margin-left: 150px;
+        overflow: visible;
+        float: left;
+      }
+      .secondary{
+        font-size:0.9em;
+        opacity: 0.8;
+      }
+    </style>
+    <paper-icon-item>
+      <div class="avatar blue" style$="background-image:url([[contact.picture.thumbnail]])" slot="item-icon">
+        <template is="dom-if" if="{{!contact.picture.thumbnail}}">[[firstLetter]]</template>
+      </div>
+      <paper-item-body two-line>
+        <div class="layout horizontal">
+          <div class="flex">
+            <div class="secondary">[[contact.name.title]]</div>
+            <div>[[fullName]]</div>
+          </div>
+          <div>
+            <paper-chip single-line>[[contact.group]]</paper-chip>
+          </div>
+        </div>
+      </paper-item-body>
+    </paper-icon-item>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PolymerContactsContact extends Polymer.Element {
+      static get is() { return 'polymer-contacts-contact'; }
+      static get properties() {
+        return {
+          contact: {
+            type: Object
+          },
+          fullName: {
+            type: String,
+            computed: '__computedFullName(contact.name.first,contact.name.last)'
+          },
+          firstLetter: {
+            type: String,
+            computed: '__firstLetter(contact.name.first)'
+          }
+        };
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        console.log(JSON.stringify(this.contact));
+      }
+      __computedFullName() {
+        return [].slice.call(arguments).join(' ');
+      }
+      __firstLetter(name) {
+        return name.charAt(0).toUpperCase();
+      }
+    }
+
+    window.customElements.define(PolymerContactsContact.is, PolymerContactsContact);
+  </script>
+</dom-module>

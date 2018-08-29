@@ -1,0 +1,196 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="polymer-contacts-contact.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/iron-input/iron-input.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+
+
+<dom-module id="polymer-contacts-app">
+  <template>
+    <style>
+      :host {
+        display: block;
+        font-family: sans-serif;
+      }
+
+      app-header {
+        background-color: #00897B;
+        color: #fff;
+      }
+
+      #body {
+        display: block;
+      }
+
+      .filter-container {
+        background: #eee;
+        padding: 20px;
+        margin: 20px;
+      }
+
+      paper-fab {
+        position: fixed;
+        bottom: 5%;
+        right: 5%;
+      }
+    </style>
+    <app-header-layout>
+      <app-header condenses>
+        <app-toolbar>
+          <div main-title>Contacts</div>
+        </app-toolbar>
+      </app-header>
+    </app-header-layout>
+    <div id="body">
+      <template is="dom-if" if="[[loading]]">
+        <div>Loading...</div>
+      </template>
+      <div>
+        <div class="filters-container" on-click="_toggleFilters">
+          <paper-icon-button icon="expand-more" title="more info" on-click="_toggleFilters" style="float:right;"></paper-icon-button>
+          <div style="padding:15px">Filter results</div>
+        </div>
+        <iron-collapse id="filters-collapse" style="width:100%;">
+          <div class="filter-container">
+            <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
+            <input type="button" value="MR" on-click="setTitleFilter" />
+            <input type="button" value="MISS" on-click="setTitleFilter" />
+            <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}" /></label>
+          </div>
+          <div class="filter-container">
+            <paper-icon-button disabled="[[!filters.name]]" on-click="_removeFilters" data-filter="name" icon="block"></paper-icon-button>
+            <paper-input style="display: inline-block" value="{{filters.name}}"></paper-input>
+          </div>
+          <div class="filter-container">
+            <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
+
+            <template is="dom-repeat" items="{{filters.groups}}">
+              <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
+            </template>
+          </div>
+        </iron-collapse>
+      </div>
+
+
+
+      <div role="listbox">
+        <template id="contactListRepeat" is="dom-repeat" items="[[contacts]]" filter="_filterContactList">
+          <polymer-contacts-contact contact="[[item]]"></polymer-contacts-contact>
+        </template>
+      </div>
+    </div>
+    <paper-fab on-click="_removeFilters" icon="add" data-filter="test"></paper-fab>
+    <iron-ajax id="ajax-load-contacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
+      handle-as="json" on-response="handleContactsResponse" debounce-duration="300"></iron-ajax>
+  </template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class PolymerContactsApp extends Polymer.Element {
+      static get is() { return 'polymer-contacts-app'; }
+      static get properties() {
+        return {
+          loading: {
+            type: Boolean,
+            value: false
+          },
+          groups: {
+            type: Array,
+            value: () => ['Favorite', 'Family', 'Friends']
+          },
+          contacts: {
+            type: Array,
+            value: () => []
+          }
+        };
+      }
+      static get observers() {
+        return [
+          '_filtersChanged(filters.*)'
+        ]
+      }
+      constructor() {
+        super();
+        //we define the filters here because they depend on groups
+        this.filters = {
+          'groups': this.groups.map(g => ({ 'name': g, 'status': false })),
+          'name': '',
+          'title': ''
+        };
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        this.loadContacts();
+      }
+
+      loadContacts() {
+        //show loading
+        this.loading = true;
+        //fetch
+        this.$['ajax-load-contacts'].generateRequest();
+      }
+
+      handleContactsResponse() {
+        this.loading = false;
+        this.loadContactsResponse.results.forEach(c => {
+          //we fake a random group into the contact
+          this.push('contacts', Object.assign({}, c, { group: this.groups[Math.floor(Math.random() * this.groups.length)] }));
+        });
+      }
+      setTitleFilter(event) {
+        this.set('filters.title', event.target.value.toLowerCase());
+      }
+      _filterContactList(item) {
+
+        if (this.filters.title && item.name.title != this.filters.title) {
+          return false;
+        }
+        if (this.filters.name && (item.name.first.toLowerCase() + item.name.last.toLowerCase()).indexOf(this.filters.name.toLowerCase()) == -1) {
+          return false;
+        }
+        //loop the groups to filter out
+        //Object.keys(this.filters.group).forEach(g => this.filters.group[g] && (valid = item.group == g));
+        if (this.filters.groups.some(fg => fg.status == true) && this.filters.groups.find(fg => fg.name == item.group).status == false) {
+          return false;
+        }
+
+        return true;
+      }
+      _filtersChanged(change) {
+        console.log(this.filters);
+        this.$.contactListRepeat.render();
+      }
+      groupFilterChanged(event) {
+        console.log(event.target, this);
+        event.model.set('item.status', event.target.checked);
+      }
+      _removeFilters(event) {
+        const filter = event.target.dataset["filter"];
+        if (filter == 'groups') {
+          this.filters.groups.forEach((fg, index) => {
+            this.set(`filters.groups.${index}.status`, false);
+          });
+        } else {
+          this.set(`filters.${filter}`, '');
+        }
+      }
+      _toggleFilters() {
+        this.$['filters-collapse'].toggle();
+      }
+    }
+
+    window.customElements.define(PolymerContactsApp.is, PolymerContactsApp);
+  </script>
+</dom-module>
