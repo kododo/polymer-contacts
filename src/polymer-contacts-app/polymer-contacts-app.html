@@ -6,17 +6,24 @@
 <link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="polymer-contacts-contact.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../../bower_components/iron-input/iron-input.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/app-layout/app-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="polymer-contacts-contact.html">
+<link rel="import" href="polymer-contacts-detail.html">
 
 
 <dom-module id="polymer-contacts-app">
   <template>
-    <style>
+    <style include="iron-flex iron-flex-factors iron-flex-alignment">
       :host {
         display: block;
         font-family: sans-serif;
@@ -42,52 +49,88 @@
         bottom: 5%;
         right: 5%;
       }
+
+      .contact-list-container {
+        @apply --layout-flex-12;
+
+      }
+
+      .contact-detail-container {
+        @apply --layout-flex-12;
+        display: none;
+      }
+
+      .mobileOn {
+        display: block;
+      }
+
+      .mobileOff {
+        display: none;
+      }
+
+      @media screen and (min-width: 768px) {
+        .contact-list-container {
+          @apply --layout-flex-6;
+
+        }
+        .contact-detail-container {
+          @apply --layout-flex-6;
+          display: block;
+        }
+        .mobileOff{
+          display: block;
+        }
+      }
     </style>
     <app-header-layout>
-      <app-header condenses>
+      <app-header slot="header" fixed condenses effects="waterfall">
         <app-toolbar>
           <div main-title>Contacts</div>
         </app-toolbar>
       </app-header>
-    </app-header-layout>
-    <div id="body">
-      <template is="dom-if" if="[[loading]]">
-        <div>Loading...</div>
-      </template>
-      <div>
-        <div class="filters-container" on-click="_toggleFilters">
-          <paper-icon-button icon="expand-more" title="more info" on-click="_toggleFilters" style="float:right;"></paper-icon-button>
-          <div style="padding:15px">Filter results</div>
-        </div>
-        <iron-collapse id="filters-collapse" style="width:100%;">
-          <div class="filter-container">
-            <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
-            <input type="button" value="MR" on-click="setTitleFilter" />
-            <input type="button" value="MISS" on-click="setTitleFilter" />
-            <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}" /></label>
-          </div>
-          <div class="filter-container">
-            <paper-icon-button disabled="[[!filters.name]]" on-click="_removeFilters" data-filter="name" icon="block"></paper-icon-button>
-            <paper-input style="display: inline-block" value="{{filters.name}}"></paper-input>
-          </div>
-          <div class="filter-container">
-            <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
-
-            <template is="dom-repeat" items="{{filters.groups}}">
-              <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
-            </template>
-          </div>
-        </iron-collapse>
-      </div>
-
-
-
-      <div role="listbox">
-        <template id="contactListRepeat" is="dom-repeat" items="[[contacts]]" filter="_filterContactList">
-          <polymer-contacts-contact contact="[[item]]"></polymer-contacts-contact>
+      <div id="body">
+        <template is="dom-if" if="[[loading]]">
+          <div>Loading...</div>
         </template>
+        <div class="layout horizontal">
+          <div id="contactListPanel" class="contact-list-container">
+            <div class="filters-container" on-click="_toggleFilters">
+              <paper-icon-button icon="expand-more" title="more info" style="float:right;"></paper-icon-button>
+              <div style="padding:15px">Filter results</div>
+            </div>
+            <iron-collapse id="filters-collapse" style="width:100%;">
+              <div class="filter-container">
+                <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
+                <input type="button" value="MR" on-click="setTitleFilter" />
+                <input type="button" value="MISS" on-click="setTitleFilter" />
+                <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}" /></label>
+              </div>
+              <div class="filter-container">
+                <paper-icon-button disabled="[[!filters.name]]" on-click="_removeFilters" data-filter="name" icon="block"></paper-icon-button>
+                <paper-input style="display: inline-block" value="{{filters.name}}"></paper-input>
+              </div>
+              <div class="filter-container">
+                <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
+  
+                <template is="dom-repeat" items="{{filters.groups}}">
+                  <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
+                </template>
+              </div>
+            </iron-collapse>
+            <div role="listbox">
+              <template id="contactListRepeat" is="dom-repeat" items="[[contacts]]" filter="_filterContactList">
+                <polymer-contacts-contact on-click="_selectContact" contact="[[item]]"></polymer-contacts-contact>
+              </template>
+            </div>
+          </div>
+          <div id="contactDetailPanel" class="contact-detail-container">
+            <polymer-contacts-detail contact="{{selectedContact}}"></polymer-contacts-detail>
+          </div>
+        </div>
       </div>
-    </div>
+    </app-header-layout>
+    
+
     <paper-fab on-click="_removeFilters" icon="add" data-filter="test"></paper-fab>
     <iron-ajax id="ajax-load-contacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
       handle-as="json" on-response="handleContactsResponse" debounce-duration="300"></iron-ajax>
@@ -113,6 +156,11 @@
           contacts: {
             type: Array,
             value: () => []
+          },
+          selectedContact: {
+            type: Object,
+            value: undefined,
+            observer: '_selectedContactChanged'
           }
         };
       }
@@ -133,6 +181,7 @@
       connectedCallback() {
         super.connectedCallback();
         this.loadContacts();
+        this.$.contactDetailPanel.addEventListener('close-clicked', () => this.showMobileContactList());
       }
 
       loadContacts() {
@@ -169,11 +218,9 @@
         return true;
       }
       _filtersChanged(change) {
-        console.log(this.filters);
         this.$.contactListRepeat.render();
       }
       groupFilterChanged(event) {
-        console.log(event.target, this);
         event.model.set('item.status', event.target.checked);
       }
       _removeFilters(event) {
@@ -188,6 +235,33 @@
       }
       _toggleFilters() {
         this.$['filters-collapse'].toggle();
+      }
+      _selectContact(e) {
+        console.log(e.target.contact);
+        this.selectedContact = e.target.contact;
+      }
+      _selectedContactChanged(newValue) {
+        if (newValue) {
+          this.showMobileContactDetail();
+        } else {
+          this.showMobileContactList();
+        }
+      }
+      showOnMobile(elem) {
+        elem.classList.add('mobileOn');
+        elem.classList.remove('mobileOff');
+      }
+      hideOnMobile(elem) {
+        elem.classList.add('mobileOff');
+        elem.classList.remove('mobileOn');
+      }
+      showMobileContactList() {
+        this.hideOnMobile(this.$.contactDetailPanel);
+        this.showOnMobile(this.$.contactListPanel);
+      }
+      showMobileContactDetail() {
+        this.hideOnMobile(this.$.contactListPanel);
+        this.showOnMobile(this.$.contactDetailPanel);
       }
     }
 

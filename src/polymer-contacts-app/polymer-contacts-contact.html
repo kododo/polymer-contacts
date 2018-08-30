@@ -28,10 +28,7 @@
       }
 
       .chip-container {
-        height: 0px;
-        margin-left: 150px;
-        overflow: visible;
-        float: left;
+        z-index: -1;
       }
       .secondary{
         font-size:0.9em;
@@ -48,7 +45,7 @@
             <div class="secondary">[[contact.name.title]]</div>
             <div>[[fullName]]</div>
           </div>
-          <div>
+          <div class="chip-container">
             <paper-chip single-line>[[contact.group]]</paper-chip>
           </div>
         </div>
@@ -80,7 +77,6 @@
       }
       connectedCallback() {
         super.connectedCallback();
-        console.log(JSON.stringify(this.contact));
       }
       __computedFullName() {
         return [].slice.call(arguments).join(' ');
