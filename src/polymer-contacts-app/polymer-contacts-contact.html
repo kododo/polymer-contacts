@@ -30,9 +30,15 @@
       .chip-container {
         z-index: -1;
       }
-      .secondary{
-        font-size:0.9em;
+
+      .secondary {
+        font-size: 0.9em;
         opacity: 0.8;
+      }
+
+      paper-chip {
+        --paper-chip-secondary-text-color: #fff;
+        --paper-chip-background-color: var(--polymer-contacts-app-primary-color-variant);
       }
     </style>
     <paper-icon-item>
@@ -46,7 +52,9 @@
             <div>[[fullName]]</div>
           </div>
           <div class="chip-container">
-            <paper-chip single-line>[[contact.group]]</paper-chip>
+            <template is="dom-if" if="[[contact.group]]">
+              <paper-chip single-line>[[contact.group]]</paper-chip>
+            </template>
           </div>
         </div>
       </paper-item-body>
@@ -79,10 +87,10 @@
         super.connectedCallback();
       }
       __computedFullName() {
-        return [].slice.call(arguments).join(' ');
+        return [].slice.call(arguments).map(s => s && s.charAt(0).toUpperCase() + s.substr(1)).join(' ');
       }
       __firstLetter(name) {
-        return name.charAt(0).toUpperCase();
+        return name && name.charAt(0).toUpperCase();
       }
     }
 

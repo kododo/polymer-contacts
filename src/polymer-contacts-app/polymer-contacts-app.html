@@ -19,7 +19,9 @@
 <link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="polymer-contacts-contact.html">
 <link rel="import" href="polymer-contacts-detail.html">
-
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 
 <dom-module id="polymer-contacts-app">
   <template>
@@ -27,11 +29,15 @@
       :host {
         display: block;
         font-family: sans-serif;
+        --polymer-contacts-app-primary-color: #6200ee;
+        --polymer-contacts-app-primary-color-variant: #3700b3;
+        --polymer-contacts-app-secondary-color: #03dac5;
+        --polymer-contacts-app-background-color: #e1e1e1;
       }
 
       app-header {
-        background-color: #00897B;
         color: #fff;
+        background-color: var(--polymer-contacts-app-primary-color);
       }
 
       #body {
@@ -48,16 +54,17 @@
         position: fixed;
         bottom: 5%;
         right: 5%;
+        background-color: var(--polymer-contacts-app-secondary-color);
       }
 
-      .contact-list-container {
+      .main-app-panel {
         @apply --layout-flex-12;
-
+        position: relative;
       }
 
       .contact-detail-container {
-        @apply --layout-flex-12;
         display: none;
+        position: relative;
       }
 
       .mobileOn {
@@ -68,32 +75,87 @@
         display: none;
       }
 
-      @media screen and (min-width: 768px) {
-        .contact-list-container {
-          @apply --layout-flex-6;
+      .searcher-container {
+        background: #eee;
+        margin: 10px;
+        height: 44px;
+        border-radius: 22px;
+        padding: 5px 9px 5px 5px;
+        box-sizing: border-box;
+      }
 
+      .search-paper-input-wrapper {
+        position: relative;
+      }
+
+      .search-paper-input-wrapper paper-input {
+        position: absolute;
+        top: -41px;
+        width: 100%;
+      }
+
+      .loading {
+        position: fixed;
+        z-index: 1;
+        background-color: #fff;
+        opacity: 0.5;
+        width: 100%;
+        text-align: center;
+        height: 100%;
+        padding-top: 30%;
+      }
+
+      .empty-contacts{
+        text-align: center;
+        margin: 50px auto;
+      }
+
+      @media screen and (min-width: 768px) {
+        .main-app-panel {
+          @apply --layout-flex-6;
         }
         .contact-detail-container {
-          @apply --layout-flex-6;
           display: block;
         }
-        .mobileOff{
+        .mobileOff {
           display: block;
+        }
+      }
+
+      @media screen and (min-width: 1024px) {
+        #body {
+          width: 1024px;
+          margin: 0 auto;
+        }
+        .main-app-panel {
+          margin: 20px;
         }
       }
     </style>
     <app-header-layout>
       <app-header slot="header" fixed condenses effects="waterfall">
-        <app-toolbar>
-          <div main-title>Contacts</div>
+        <app-toolbar style="max-width: 1024px; margin: 0 auto">
+          <div main-title>
+            <iron-icon style="vertical-align: bottom;margin-right:10px;" icon="polymer"></iron-icon>Simple Contacts App
+          </div>
         </app-toolbar>
       </app-header>
+      <template is="dom-if" if="[[loading]]">
+        <div class="loading">
+          <paper-spinner style="zoom:2.5" active="[[loading]]"></paper-spinner>
+        </div>
+      </template>
+
       <div id="body">
-        <template is="dom-if" if="[[loading]]">
-          <div>Loading...</div>
-        </template>
         <div class="layout horizontal">
-          <div id="contactListPanel" class="contact-list-container">
+          <div id="contactListPanel" class="main-app-panel contact-list-container">
+            <div class="searcher-container layout horizontal center">
+              <paper-icon-button on-click="_removeFilters" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
+              <div class="search-paper-input-wrapper flex-10">
+                <paper-input value="{{filters.name}}"></paper-input>
+              </div>
+              <iron-icon class="flex" style="float:right; color: #666;" icon="search"></iron-icon>
+            </div>
             <div class="filters-container" on-click="_toggleFilters">
               <paper-icon-button icon="expand-more" title="more info" style="float:right;"></paper-icon-button>
               <div style="padding:15px">Filter results</div>
@@ -103,37 +165,40 @@
                 <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
                 <input type="button" value="MR" on-click="setTitleFilter" />
                 <input type="button" value="MISS" on-click="setTitleFilter" />
-                <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}" /></label>
+                <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}"
+                  /></label>
               </div>
-              <div class="filter-container">
-                <paper-icon-button disabled="[[!filters.name]]" on-click="_removeFilters" data-filter="name" icon="block"></paper-icon-button>
-                <paper-input style="display: inline-block" value="{{filters.name}}"></paper-input>
-              </div>
+
               <div class="filter-container">
                 <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
-  
+
                 <template is="dom-repeat" items="{{filters.groups}}">
                   <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
                 </template>
               </div>
             </iron-collapse>
             <div role="listbox">
-              <template id="contactListRepeat" is="dom-repeat" items="[[contacts]]" filter="_filterContactList">
-                <polymer-contacts-contact on-click="_selectContact" contact="[[item]]"></polymer-contacts-contact>
+              <template is="dom-if" if="[[!contacts.length]]">
+                <div class="empty-contacts">Your contacts list is empty :(</div>
+              </template>
+              <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList">
+                <polymer-contacts-contact on-click="_selectContact" contact="{{item}}"></polymer-contacts-contact>
               </template>
             </div>
           </div>
-          <div id="contactDetailPanel" class="contact-detail-container">
+          <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
             <polymer-contacts-detail contact="{{selectedContact}}"></polymer-contacts-detail>
           </div>
         </div>
       </div>
     </app-header-layout>
-    
 
-    <paper-fab on-click="_removeFilters" icon="add" data-filter="test"></paper-fab>
-    <iron-ajax id="ajax-load-contacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
+
+    <paper-fab on-click="_newContact" icon="add" data-filter="test"></paper-fab>
+    <paper-toast id="toast"></paper-toast>
+    <iron-ajax id="ajaxLoadContacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
       handle-as="json" on-response="handleContactsResponse" debounce-duration="300"></iron-ajax>
+    <iron-ajax id="ajaxNewContact" on-response="handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/" last-response="{{newContactResponse}}"></iron-ajax>
   </template>
 
   <script>
@@ -181,14 +246,31 @@
       connectedCallback() {
         super.connectedCallback();
         this.loadContacts();
-        this.$.contactDetailPanel.addEventListener('close-clicked', () => this.showMobileContactList());
+        this.$.contactDetailPanel.addEventListener('close-clicked', () => {
+          this.selectedContact = undefined;
+        });
+        this.$.contactDetailPanel.addEventListener('contact-saved', e => {
+          const index = this.contacts.indexOf(this.selectedContact);
+          console.log(index);
+          if (index == -1){
+            //new contact
+            this.push('contacts', e.detail.contact);
+            this.selectedContact = e.detail.contact;
+          }else{
+            this.splice('contacts', index, 1, Object.assign({}, e.detail.contact));
+            this.selectedContact = this.contacts[index];
+          }
+          this.showToast('Changes made to the contact were saved');
+        });
       }
 
       loadContacts() {
         //show loading
         this.loading = true;
         //fetch
-        this.$['ajax-load-contacts'].generateRequest();
+        setTimeout(()=>{
+          this.$.ajaxLoadContacts.generateRequest();
+        },1000);
       }
 
       handleContactsResponse() {
@@ -211,7 +293,7 @@
         }
         //loop the groups to filter out
         //Object.keys(this.filters.group).forEach(g => this.filters.group[g] && (valid = item.group == g));
-        if (this.filters.groups.some(fg => fg.status == true) && this.filters.groups.find(fg => fg.name == item.group).status == false) {
+        if (this.filters.groups.some(fg => fg.status == true) && (!item.group || this.filters.groups.find(fg => fg.name == item.group).status == false)) {
           return false;
         }
 
@@ -262,6 +344,19 @@
       showMobileContactDetail() {
         this.hideOnMobile(this.$.contactListPanel);
         this.showOnMobile(this.$.contactDetailPanel);
+      }
+      showToast(message) {
+        this.$.toast.text = message;
+        this.$.toast.show();
+      }
+      _newContact() {
+        this.loading = true;
+        //fetch a new user
+        this.$.ajaxNewContact.generateRequest();
+      }
+      handleNewContactResponse(){
+        this.loading = false;
+        this.selectedContact = Object.assign({}, this.newContactResponse.results[0]);
       }
     }
 
