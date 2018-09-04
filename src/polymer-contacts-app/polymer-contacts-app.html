@@ -26,6 +26,7 @@
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-swatch-picker/paper-swatch-picker.html">
 <link rel="import" href="../../bower_components/web-animations-js/web-animations-next.min.html">
+<link rel="import" href="../../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
 
 <dom-module id="polymer-contacts-app">
   <template>
@@ -133,7 +134,7 @@
         .mobileOff {
           display: block;
         }
-        #fab.mobileOff{
+        #fab.mobileOff {
           display: none;
         }
       }
@@ -146,7 +147,7 @@
         .main-app-panel {
           margin: 20px;
         }
-        #fab.mobileOff{
+        #fab.mobileOff {
           display: block;
         }
       }
@@ -210,6 +211,8 @@
             <polymer-contacts-detail contact="{{selectedContact}}"></polymer-contacts-detail>
           </div>
         </div>
+        <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add" data-filter="test"></paper-fab>
+
       </div>
     </app-header-layout>
 
@@ -239,11 +242,12 @@
     </paper-dialog>
 
 
-    <paper-fab id="fab" on-click="_newContact" icon="add" data-filter="test"></paper-fab>
     <paper-toast id="toast"></paper-toast>
     <iron-ajax id="ajaxLoadContacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
       handle-as="json" on-response="handleContactsResponse" debounce-duration="300"></iron-ajax>
     <iron-ajax id="ajaxNewContact" on-response="handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/" last-response="{{newContactResponse}}"></iron-ajax>
+    <app-localstorage-document key="contacts" data="{{contacts}}"></app-localstorage-document>
+    <app-localstorage-document key="theme" data="{{theme}}"></app-localstorage-document>
   </template>
 
   <script>
@@ -295,13 +299,12 @@
       }
       connectedCallback() {
         super.connectedCallback();
-        this.loadContacts();
+        //this.loadContacts();
         this.$.contactDetailPanel.addEventListener('close-clicked', () => {
           this.selectedContact = undefined;
         });
         this.$.contactDetailPanel.addEventListener('contact-saved', e => {
           const index = this.contacts.indexOf(this.selectedContact);
-          console.log(index);
           if (index == -1) {
             //new contact
             this.push('contacts', e.detail.contact);
@@ -396,7 +399,6 @@
         this.$['filters-collapse'].toggle();
       }
       _selectContact(e) {
-        console.log(e.target.contact);
         this.selectedContact = e.target.contact;
       }
       _selectedContactChanged(newValue) {
@@ -420,10 +422,10 @@
       }
       showMobileContactList() {
         this.hideOnMobile([this.$.contactDetailPanel]);
-        this.showOnMobile([this.$.contactListPanel,this.$.fab]);
+        this.showOnMobile([this.$.contactListPanel, this.$.fab]);
       }
       showMobileContactDetail() {
-        this.hideOnMobile([this.$.fab,this.$.contactListPanel]);
+        this.hideOnMobile([this.$.fab, this.$.contactListPanel]);
         this.showOnMobile([this.$.contactDetailPanel]);
       }
       showToast(message) {

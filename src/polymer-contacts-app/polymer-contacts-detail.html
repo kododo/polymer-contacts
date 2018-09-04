@@ -61,11 +61,13 @@
 
             .container {
                 background: var(--polymer-contacts-app-background-color);
-                height: 600px
+                height: calc(100vh - 64px);
+                position: relative;
             }
 
-            app-header {
+            app-toolbar {
                 background-color: var(--polymer-contacts-app-secondary-color);
+                color: var(--polymer-contacts-app-secondary-color-font);
             }
 
             .field-row {
@@ -114,6 +116,11 @@
                 box-sizing: border-box;
             }
 
+            .body {
+                height: 75%;
+                overflow-y: scroll;
+            }
+
             @media screen and (min-width: 768px) {
                 :host {
                     width: 50%;
@@ -126,6 +133,12 @@
                     display: block;
                 }
             }
+
+            @media screen and (min-width: 1024px) {
+                .container {
+                    height: 75vh;
+                }
+            }
         </style>
 
         <template is="dom-if" if="{{empty}}">
@@ -136,32 +149,33 @@
         </template>
         <template is="dom-if" if="{{!empty}}">
             <div class="container">
-                <app-header-layout has-scrolling-region>
-                    <app-header slot="header">
-                        <app-toolbar style="max-width: 1024px; margin: 0 auto">
-                            <paper-icon-button class="only-mobile" icon="arrow-back" on-click="_back"></paper-icon-button>
-                            <paper-icon-button class="only-desktop" icon="close" on-click="_back"></paper-icon-button>
-                            <div main-title>[[fullName]]</div>
-                        </app-toolbar>
-                    </app-header>
-                    <div class="body">
-                        <div class="contact-photo" style="background-image:url([[contact.picture.large]])">
-                            <iron-icon icon="image:photo-camera"></iron-icon>
-                        </div>
-                        <div class="field-row">
-                            <paper-input label="Title" class="field" value="{{contact.name.title}}"></paper-input>
-                            <paper-input label="Gender" class="field" value="{{contact.gender}}"></paper-input>
-                        </div>
-                        <div class="layout horizontal">
-                            <paper-input label="First Name" class="field" value="{{contact.name.first}}"></paper-input>
-                            <paper-input label="Last Name" class="field" value="{{contact.name.last}}"></paper-input>
-                        </div>
-                        <div class="layout horizontal end-justified bottom-toolbar">
-                            <paper-button on-click="_back">Cancel</paper-button>
-                            <paper-button raised primary on-click="_save">Save</paper-button>
-                        </div>
+                <app-toolbar style="max-width: 1024px; margin: 0 auto">
+                    <paper-icon-button class="only-mobile" icon="arrow-back" on-click="_back"></paper-icon-button>
+                    <paper-icon-button class="only-desktop" icon="close" on-click="_back"></paper-icon-button>
+                    <div main-title>[[fullName]]</div>
+                </app-toolbar>
+                <div class="body">
+                    <div class="contact-photo" style="background-image:url([[contact.picture.large]])">
+                        <iron-icon icon="image:photo-camera"></iron-icon>
                     </div>
-                </app-header-layout>
+                    <div class="field-row">
+                        <paper-input label="Gender" class="field" value="{{contact.gender}}"></paper-input>
+                        <paper-input label="Title" class="field" value="{{contact.name.title}}"></paper-input>
+                    </div>
+                    <div class="field-row">
+                        <paper-input label="First Name" class="field" value="{{contact.name.first}}"></paper-input>
+                        <paper-input label="Last Name" class="field" value="{{contact.name.last}}"></paper-input>
+                    </div>
+                    <div class="field-row">
+                        <paper-input label="Phone" class="field" value="{{contact.phone}}"></paper-input>
+                        <paper-input label="Cell" class="field" value="{{contact.cell}}"></paper-input>
+                    </div>
+                   
+                </div>
+                <div class="layout horizontal end-justified bottom-toolbar">
+                    <paper-button on-click="_back">Cancel</paper-button>
+                    <paper-button raised primary on-click="_save">Save</paper-button>
+                </div>
             </div>
         </template>
     </template>
