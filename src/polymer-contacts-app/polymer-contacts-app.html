@@ -6,6 +6,7 @@
 <link rel="import" href="../../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
 <link rel="import" href="../../bower_components/paper-fab/paper-fab.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-icons/image-icons.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../../bower_components/iron-input/iron-input.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
@@ -22,6 +23,9 @@
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-swatch-picker/paper-swatch-picker.html">
+<link rel="import" href="../../bower_components/web-animations-js/web-animations-next.min.html">
 
 <dom-module id="polymer-contacts-app">
   <template>
@@ -33,10 +37,13 @@
         --polymer-contacts-app-primary-color-variant: #3700b3;
         --polymer-contacts-app-secondary-color: #03dac5;
         --polymer-contacts-app-background-color: #e1e1e1;
+        --polymer-contacts-app-primary-color-font: #fff;
+        --polymer-contacts-app-primary-color-variant-font: #fff;
+        --polymer-contacts-app-secondary-color-font: #fff;
       }
 
       app-header {
-        color: #fff;
+        color: var(--polymer-contacts-app-primary-color-font);
         background-color: var(--polymer-contacts-app-primary-color);
       }
 
@@ -55,6 +62,7 @@
         bottom: 5%;
         right: 5%;
         background-color: var(--polymer-contacts-app-secondary-color);
+        color: var(--polymer-contacts-app-secondary-color-font);
       }
 
       .main-app-panel {
@@ -105,9 +113,14 @@
         padding-top: 30%;
       }
 
-      .empty-contacts{
+      .empty-contacts {
         text-align: center;
         margin: 50px auto;
+      }
+
+      paper-button[raised] {
+        background-color: var(--polymer-contacts-app-primary-color-variant);
+        color: var(--polymer-contacts-app-primary-color-variant-font);
       }
 
       @media screen and (min-width: 768px) {
@@ -120,6 +133,9 @@
         .mobileOff {
           display: block;
         }
+        #fab.mobileOff{
+          display: none;
+        }
       }
 
       @media screen and (min-width: 1024px) {
@@ -130,6 +146,9 @@
         .main-app-panel {
           margin: 20px;
         }
+        #fab.mobileOff{
+          display: block;
+        }
       }
     </style>
     <app-header-layout>
@@ -138,6 +157,7 @@
           <div main-title>
             <iron-icon style="vertical-align: bottom;margin-right:10px;" icon="polymer"></iron-icon>Simple Contacts App
           </div>
+          <paper-icon-button icon="image:color-lens" on-click="_openColorDialog"></paper-icon-button>
         </app-toolbar>
       </app-header>
       <template is="dom-if" if="[[loading]]">
@@ -193,8 +213,33 @@
       </div>
     </app-header-layout>
 
+    <paper-dialog id="colorDialog">
+      <h2>Custom theme</h2>
+      <p>Choose your Primary, Accent and Secondary colors to theme the app.<br/> Text color will automatically change to
+        contrast the background colors.
+      </p>
+      <div>
+        Primary Color:
+        <paper-swatch-picker color="{{theme.primaryColor}}"></paper-swatch-picker>
+      </div>
+      <div>
+        Accent Color:
+        <paper-swatch-picker color="{{theme.accentColor}}"></paper-swatch-picker>
+      </div>
+      <div>
+        Secondary Color:
+        <paper-swatch-picker color="{{theme.secondaryColor}}"></paper-swatch-picker>
+      </div>
 
-    <paper-fab on-click="_newContact" icon="add" data-filter="test"></paper-fab>
+
+      <div class="buttons">
+        <paper-button dialog-dismiss>Close</paper-button>
+        <paper-button raised dialog-confirm autofocus>Apply</paper-button>
+      </div>
+    </paper-dialog>
+
+
+    <paper-fab id="fab" on-click="_newContact" icon="add" data-filter="test"></paper-fab>
     <paper-toast id="toast"></paper-toast>
     <iron-ajax id="ajaxLoadContacts" params='{"results":10}' url="https://randomuser.me/api/" last-response="{{loadContactsResponse}}"
       handle-as="json" on-response="handleContactsResponse" debounce-duration="300"></iron-ajax>
@@ -226,12 +271,17 @@
             type: Object,
             value: undefined,
             observer: '_selectedContactChanged'
+          },
+          theme: {
+            type: Object,
+            value: undefined
           }
         };
       }
       static get observers() {
         return [
-          '_filtersChanged(filters.*)'
+          '_filtersChanged(filters.*)',
+          '_themeChanged(theme.*)'
         ]
       }
       constructor() {
@@ -252,25 +302,52 @@
         this.$.contactDetailPanel.addEventListener('contact-saved', e => {
           const index = this.contacts.indexOf(this.selectedContact);
           console.log(index);
-          if (index == -1){
+          if (index == -1) {
             //new contact
             this.push('contacts', e.detail.contact);
             this.selectedContact = e.detail.contact;
-          }else{
+          } else {
             this.splice('contacts', index, 1, Object.assign({}, e.detail.contact));
             this.selectedContact = this.contacts[index];
           }
           this.showToast('Changes made to the contact were saved');
         });
+        this.theme = {
+          'primaryColor': '#6200ee',
+          'accentColor': '#3700b3',
+          'secondaryColor': '#03dac5'
+        };
+      }
+
+      _themeChanged(change) {
+
+        function getContrastYIQ(hexcolor) {
+          var r = parseInt(hexcolor.substr(1, 2), 16);
+          var g = parseInt(hexcolor.substr(2, 2), 16);
+          var b = parseInt(hexcolor.substr(4, 2), 16);
+          var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+          return (yiq >= 128) ? '#000' : '#fff';
+        }
+
+        //Calculate the fonts based on contrast
+        this.updateStyles({
+          '--polymer-contacts-app-primary-color': this.theme.primaryColor,
+          '--polymer-contacts-app-primary-color-variant': this.theme.accentColor,
+          '--polymer-contacts-app-secondary-color': this.theme.secondaryColor,
+          '--polymer-contacts-app-primary-color-font': getContrastYIQ(this.theme.primaryColor),
+          '--polymer-contacts-app-primary-color-variant-font': getContrastYIQ(this.theme.accentColor),
+          '--polymer-contacts-app-secondary-color-font': getContrastYIQ(this.theme.secondaryColor)
+        });
+
       }
 
       loadContacts() {
         //show loading
         this.loading = true;
         //fetch
-        setTimeout(()=>{
+        setTimeout(() => {
           this.$.ajaxLoadContacts.generateRequest();
-        },1000);
+        }, 1000);
       }
 
       handleContactsResponse() {
@@ -329,21 +406,25 @@
           this.showMobileContactList();
         }
       }
-      showOnMobile(elem) {
-        elem.classList.add('mobileOn');
-        elem.classList.remove('mobileOff');
+      showOnMobile(elems) {
+        elems.forEach(elem => {
+          elem.classList.add('mobileOn');
+          elem.classList.remove('mobileOff');
+        });
       }
-      hideOnMobile(elem) {
-        elem.classList.add('mobileOff');
-        elem.classList.remove('mobileOn');
+      hideOnMobile(elems) {
+        elems.forEach(elem => {
+          elem.classList.add('mobileOff');
+          elem.classList.remove('mobileOn');
+        });
       }
       showMobileContactList() {
-        this.hideOnMobile(this.$.contactDetailPanel);
-        this.showOnMobile(this.$.contactListPanel);
+        this.hideOnMobile([this.$.contactDetailPanel]);
+        this.showOnMobile([this.$.contactListPanel,this.$.fab]);
       }
       showMobileContactDetail() {
-        this.hideOnMobile(this.$.contactListPanel);
-        this.showOnMobile(this.$.contactDetailPanel);
+        this.hideOnMobile([this.$.fab,this.$.contactListPanel]);
+        this.showOnMobile([this.$.contactDetailPanel]);
       }
       showToast(message) {
         this.$.toast.text = message;
@@ -354,9 +435,12 @@
         //fetch a new user
         this.$.ajaxNewContact.generateRequest();
       }
-      handleNewContactResponse(){
+      handleNewContactResponse() {
         this.loading = false;
         this.selectedContact = Object.assign({}, this.newContactResponse.results[0]);
+      }
+      _openColorDialog() {
+        this.$.colorDialog.open();
       }
     }
 

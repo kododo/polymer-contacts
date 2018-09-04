@@ -101,6 +101,19 @@
                 display: none;
             }
 
+            paper-button[primary] {
+                background-color: var(--polymer-contacts-app-primary-color-variant);
+                color: var(--polymer-contacts-app-primary-color-variant-font);
+            }
+
+            .bottom-toolbar {
+                position: absolute;
+                bottom: 0;
+                width: 100%;
+                padding: 15px;
+                box-sizing: border-box;
+            }
+
             @media screen and (min-width: 768px) {
                 :host {
                     width: 50%;
@@ -143,7 +156,10 @@
                             <paper-input label="First Name" class="field" value="{{contact.name.first}}"></paper-input>
                             <paper-input label="Last Name" class="field" value="{{contact.name.last}}"></paper-input>
                         </div>
-                        <paper-button on-click="_save">Guardar</paper-button>
+                        <div class="layout horizontal end-justified bottom-toolbar">
+                            <paper-button on-click="_back">Cancel</paper-button>
+                            <paper-button raised primary on-click="_save">Save</paper-button>
+                        </div>
                     </div>
                 </app-header-layout>
             </div>
