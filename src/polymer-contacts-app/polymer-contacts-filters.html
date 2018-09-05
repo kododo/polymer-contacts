@@ -1,0 +1,100 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+
+
+<dom-module id="polymer-contacts-filters">
+    <template>
+        <style include="iron-flex iron-flex-factors iron-flex-alignment">
+            :host {
+                display: block;
+            }
+
+            .searcher-container {
+                background: #eee;
+                margin: 10px;
+                height: 44px;
+                border-radius: 22px;
+                padding: 5px 9px 5px 5px;
+                box-sizing: border-box;
+            }
+
+            .search-paper-input-wrapper {
+                position: relative;
+            }
+
+            .search-paper-input-wrapper paper-input {
+                position: absolute;
+                top: -41px;
+                width: 100%;
+            }
+
+            .filter-container {
+                background: #eee;
+                padding: 20px;
+                margin: 20px;
+            }
+        </style>
+        <div class="searcher-container layout horizontal center">
+            <paper-icon-button on-click="_removeFilters" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
+            <div class="search-paper-input-wrapper flex-10">
+                <paper-input value="{{filters.name}}"></paper-input>
+            </div>
+            <iron-icon class="flex" style="float:right; color: #666;" icon="search"></iron-icon>
+        </div>
+        <div class="filters-container" on-click="_toggleFilters">
+            <paper-icon-button icon="expand-more" title="more info" style="float:right;"></paper-icon-button>
+            <div style="padding:15px">Filter results</div>
+        </div>
+        <iron-collapse id="filters-collapse" style="width:100%;">
+            <div class="filter-container">
+                <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
+                <input type="button" value="MR" on-click="setTitleFilter" />
+                <input type="button" value="MISS" on-click="setTitleFilter" />
+                <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}"
+                    /></label>
+            </div>
+
+            <div class="filter-container">
+                <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
+
+                <template is="dom-repeat" items="{{filters.groups}}">
+                    <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
+                </template>
+            </div>
+        </iron-collapse>
+    </template>
+
+    <script>
+        /**
+         * @customElement
+         * @polymer
+         */
+        class PolymerContactsFilters extends Polymer.Element {
+            static get is() { return 'polymer-contacts-filters'; }
+            static get properties() {
+                return {
+                };
+            }
+            _toggleFilters() {
+                this.$['filters-collapse'].toggle();
+            }
+            _removeFilters(event) {
+                const filter = event.target.dataset["filter"];
+                if (filter == 'groups') {
+                    this.filters.groups.forEach((fg, index) => {
+                        this.set(`filters.groups.${index}.status`, false);
+                    });
+                } else {
+                    this.set(`filters.${filter}`, '');
+                }
+            }
+        }
+
+        window.customElements.define(PolymerContactsFilters.is, PolymerContactsFilters);
+    </script>
+</dom-module>

@@ -1,0 +1,60 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-swatch-picker/paper-swatch-picker.html">
+<link rel="import" href="../../bower_components/web-animations-js/web-animations-next.min.html">
+
+<dom-module id="polymer-contacts-theme-selector">
+    <template>
+        <style>
+            :host {
+                display: block;
+            }
+        </style>
+
+        <paper-dialog id="colorDialog">
+            <h2>Custom theme</h2>
+            <p>Choose your Primary, Accent and Secondary colors to theme the app.<br/> Text color will automatically change
+                to contrast the background colors.
+            </p>
+            <div>
+                Primary Color:
+                <paper-swatch-picker color="{{theme.primaryColor}}"></paper-swatch-picker>
+            </div>
+            <div>
+                Accent Color:
+                <paper-swatch-picker color="{{theme.accentColor}}"></paper-swatch-picker>
+            </div>
+            <div>
+                Secondary Color:
+                <paper-swatch-picker color="{{theme.secondaryColor}}"></paper-swatch-picker>
+            </div>
+
+
+            <div class="buttons">
+                <paper-button dialog-dismiss>Close</paper-button>
+                <paper-button raised dialog-confirm autofocus>Apply</paper-button>
+            </div>
+        </paper-dialog>
+
+
+    </template>
+
+    <script>
+        /**
+         * @customElement
+         * @polymer
+         */
+        class PolymerContactsThemeSelector extends Polymer.Element {
+            static get is() { return 'polymer-contacts-theme-selector'; }
+            static get properties() {
+                return {
+                };
+            }
+            open(){
+                this.$.colorDialog.open();
+            }
+        }
+
+        window.customElements.define(PolymerContactsThemeSelector.is, PolymerContactsThemeSelector);
+    </script>
+</dom-module>
