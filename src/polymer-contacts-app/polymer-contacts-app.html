@@ -57,8 +57,8 @@
         position: fixed;
         bottom: 5%;
         right: 5%;
-        background-color: var(--polymer-contacts-app-secondary-color);
-        color: var(--polymer-contacts-app-secondary-color-font);
+        background-color: var(--polymer-contacts-app-primary-color-variant);
+        color: var(--polymer-contacts-app-primary-color-variant-font);
       }
 
       .main-app-panel {
@@ -95,21 +95,19 @@
         margin: 50px auto;
       }
 
-      paper-button[raised] {
-        background-color: var(--polymer-contacts-app-primary-color-variant);
-        color: var(--polymer-contacts-app-primary-color-variant-font);
-      }
-
       @media screen and (min-width: 768px) {
         .main-app-panel {
           @apply --layout-flex-6;
         }
+
         .contact-detail-container {
           display: block;
         }
+
         .mobileOff {
           display: block;
         }
+
         #fab.mobileOff {
           display: none;
         }
@@ -120,9 +118,11 @@
           width: 1024px;
           margin: 0 auto;
         }
+
         .main-app-panel {
           margin: 20px;
         }
+
         #fab.mobileOff {
           display: block;
         }
@@ -137,7 +137,7 @@
           <paper-icon-button icon="image:color-lens" on-click="_openColorDialog"></paper-icon-button>
         </app-toolbar>
       </app-header>
-      
+
       <!-- loading layer -->
       <template is="dom-if" if="[[loading]]">
         <div class="loading">
@@ -163,7 +163,8 @@
           </div>
           <!-- right app panel, with contact detail -->
           <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
-            <polymer-contacts-detail contact="{{selectedContact}}"></polymer-contacts-detail>
+            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact"
+              on-contact-saved="_saveContact" contact="{{selectedContact}}"></polymer-contacts-detail>
           </div>
         </div>
         <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add"></paper-fab>
@@ -175,7 +176,7 @@
 
     <!-- app helpers: toasts, ajax, etc -->
     <paper-toast id="toast"></paper-toast>
-    <iron-ajax id="ajaxNewContact" on-response="handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/" last-response="{{newContactResponse}}"></iron-ajax>
+    <iron-ajax id="ajaxNewContact" on-response="handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/"></iron-ajax>
     <app-localstorage-document key="contacts" data="{{contacts}}"></app-localstorage-document>
     <app-localstorage-document key="theme" data="{{theme}}"></app-localstorage-document>
 
@@ -209,7 +210,10 @@
           },
           theme: {
             type: Object,
-            value: undefined
+          },
+          filters: {
+            type: Object,
+            value: () => ({})
           }
         };
       }
@@ -219,41 +223,23 @@
           '_themeChanged(theme.*)'
         ]
       }
-      constructor() {
-        super();
+
+      connectedCallback() {
+        super.connectedCallback();
         //we define the filters here because they depend on groups
         this.filters = {
           'groups': this.groups.map(g => ({ 'name': g, 'status': false })),
           'name': '',
           'title': ''
         };
-      }
-      connectedCallback() {
-        super.connectedCallback();
-        this.$.contactDetailPanel.addEventListener('close-clicked', () => {
-          this.selectedContact = undefined;
-        });
-        this.$.contactDetailPanel.addEventListener('contact-saved', e => {
-          const index = this.contacts.indexOf(this.selectedContact);
-          if (index == -1) {
-            //new contact
-            this.push('contacts', e.detail.contact);
-            this.selectedContact = e.detail.contact;
-          } else {
-            this.splice('contacts', index, 1, Object.assign({}, e.detail.contact));
-            this.selectedContact = this.contacts[index];
-          }
-          this.showToast('Changes made to the contact were saved');
-        });
         this.theme = {
-          'primaryColor': '#6200ee',
-          'accentColor': '#3700b3',
-          'secondaryColor': '#03dac5'
-        };
+          primaryColor: '#6200ee',
+          accentColor: '#3700b3',
+          secondaryColor: '#03dac5'
+        }
       }
 
       _themeChanged(change) {
-
         function getContrastYIQ(hexcolor) {
           var r = parseInt(hexcolor.substr(1, 2), 16);
           var g = parseInt(hexcolor.substr(2, 2), 16);
@@ -291,9 +277,24 @@
       _filtersChanged(change) {
         this.$.contactListRepeat.render();
       }
-      
-      _selectContact(e) {
-        this.selectedContact = e.target.contact;
+
+      _selectContact(event) {
+        this.selectedContact = event.target.contact;
+      }
+      _deselectContact() {
+        this.selectedContact = undefined;
+      }
+      _saveContact(event) {
+        const index = this.contacts.indexOf(this.selectedContact);
+        if (index == -1) {
+          //new contact
+          this.push('contacts', event.detail.contact);
+          this.selectedContact = event.detail.contact;
+        } else {
+          this.splice('contacts', index, 1, Object.assign({}, event.detail.contact));
+          this.selectedContact = this.contacts[index];
+        }
+        this.showToast('Changes made to the contact were saved');
       }
       _selectedContactChanged(newValue) {
         if (newValue) {
@@ -333,10 +334,17 @@
       }
       handleNewContactResponse() {
         this.loading = false;
-        this.selectedContact = Object.assign({}, this.newContactResponse.results[0]);
+        this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0]);
       }
       _openColorDialog() {
         this.$.themeSelector.open();
+      }
+      _deleteContact() {
+        const index = this.contacts.indexOf(this.selectedContact);
+        if (index != -1) {
+          this._deselectContact();
+          this.splice('contacts', index, 1);
+        }
       }
     }
 

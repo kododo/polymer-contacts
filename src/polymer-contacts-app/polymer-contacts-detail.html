@@ -6,6 +6,7 @@
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/app-layout/app-box/app-box.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 
 <dom-module id="polymer-contacts-detail">
     <template>
@@ -59,7 +60,7 @@
                 opacity: 1;
             }
 
-            .container {
+            .contact-edit-form {
                 background: var(--polymer-contacts-app-background-color);
                 height: calc(100vh - 64px);
                 position: relative;
@@ -124,7 +125,12 @@
             .back-button{
                 margin-right: 10px;
             }
-
+            [delete-button]{
+                float:right;
+            }
+            [main-title]{
+                @apply --layout-flex;
+            }
             @media screen and (min-width: 768px) {
                 :host {
                     width: 50%;
@@ -139,7 +145,7 @@
             }
 
             @media screen and (min-width: 1024px) {
-                .container {
+                .contact-edit-form {
                     height: 75vh;
                 }
             }
@@ -152,11 +158,12 @@
             <div class="empty-info">Choose a contact to view or edit</div>
         </template>
         <template is="dom-if" if="{{!empty}}">
-            <div class="container">
+            <div class="contact-edit-form">
                 <app-toolbar style="max-width: 1024px; margin: 0 auto">
                     <paper-icon-button class="back-button only-mobile" icon="arrow-back" on-click="_back"></paper-icon-button>
                     <paper-icon-button class="back-button only-desktop" icon="close" on-click="_back"></paper-icon-button>
                     <div main-title>[[fullName]]</div>
+                    <paper-icon-button icon="delete" delete-button on-click="_deleteContact"></paper-icon-button>
                 </app-toolbar>
                 <div class="body">
                     <div class="contact-photo" style="background-image:url([[contact.picture.large]])">
@@ -177,7 +184,7 @@
                    
                 </div>
                 <div class="layout horizontal end-justified bottom-toolbar">
-                    <paper-button on-click="_back">Cancel</paper-button>
+                    <paper-button cancel-button on-click="_back">Cancel</paper-button>
                     <paper-button raised primary on-click="_save">Save</paper-button>
                 </div>
             </div>
@@ -224,6 +231,9 @@
             }
             _save() {
                 this.dispatchEvent(new CustomEvent('contact-saved', { detail: { contact: this.contact }, bubbles: true, composed: true }));
+            }
+            _deleteContact(){
+                this.dispatchEvent(new CustomEvent('contact-delete', { detail: { contact: this.contact }, bubbles: true, composed: true }));
             }
         }
 

@@ -1,58 +1,135 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <title>polymer-contacts-app test</title>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
-    <script src="../../../web-component-tester/browser.js"></script>
+  <title>polymer-contacts-app test</title>
 
-    <link rel="import" href="../../src/polymer-contacts-app/polymer-contacts-app.html">
-  </head>
-  <body>
+  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
 
-    <test-fixture id="BasicTestFixture">
-      <template>
-        <polymer-contacts-app></polymer-contacts-app>
-      </template>
-    </test-fixture>
+  <link rel="import" href="../../src/polymer-contacts-app/polymer-contacts-app.html">
+</head>
 
-    <test-fixture id="ChangedPropertyTestFixture">
-      <template>
-        <polymer-contacts-app></polymer-contacts-app>
-      </template>
-    </test-fixture>
+<body>
 
-    <script>
-      suite('polymer-contacts-app', function() {
+  <test-fixture id="BasicTestFixture">
+    <template>
+      <polymer-contacts-app></polymer-contacts-app>
+    </template>
+  </test-fixture>
 
-        test('instantiate is loading', function(){
-          var element = fixture('BasicTestFixture');
-          expect(element.groups).to.be.an('Array');
-        });
+  <script>
+    suite('polymer-contacts-app', function () {
 
-        /* test('instantiating the element with default properties works', function() {
-          var element = fixture('BasicTestFixture');
-          assert.equal(element.prop1, 'polymer-contacts-app');
-          var elementShadowRoot = element.shadowRoot;
-          var elementHeader = elementShadowRoot.querySelector('h2');
-          assert.equal(elementHeader.innerHTML, 'Hello polymer-contacts-app!');
-        });
+      let basicElement, storage;
+      // in our fake user we use an invalid URL //:0 for user pictures to not trigger 404 calls
+      // see: https://stackoverflow.com/questions/5775469/whats-the-valid-way-to-include-an-image-with-no-src
+      const fakeResponse = '{"results":[{"gender":"female","name":{"title":"mrs","first":"emma","last":"walker"},"location":{"street":"5895 oxford terrace","city":"upper hutt","state":"northland","postcode":82036,"coordinates":{"latitude":"65.9435","longitude":"66.3333"},"timezone":{"offset":"+5:00","description":"Ekaterinburg, Islamabad, Karachi, Tashkent"}},"email":"emma.walker@example.com","login":{"uuid":"4c5b9ad8-c538-40c2-ad4a-b8d559c4bbac","username":"purpleostrich555","password":"disney","salt":"vnGaUii2","md5":"72b150a37af8ed8d614b3b32c61498f4","sha1":"9a1fe57b67fa8e9ad26d75b7ca5bcbb756a45024","sha256":"ebbddc176b95b8e978d39b4b77858764895362d3c373fdc2be89c51d685002ee"},"dob":{"date":"1989-03-28T02:48:56Z","age":29},"registered":{"date":"2008-02-13T08:02:46Z","age":10},"phone":"(672)-666-8975","cell":"(411)-846-1173","id":{"name":"","value":null},"picture":{"large":"//:0","medium":"//:0","thumbnail":"//:0"},"nat":"NZ"}],"info":{"seed":"c8c0b93b7077bc97","results":1,"page":1,"version":"1.2"}}';
+      const fakeContactList = '[{"gender":"female","name":{"title":"miss","first":"ellie","last":"carlson"},"location":{"street":"4666 high street","city":"leicester","state":"west sussex","postcode":"WG0U 0WP","coordinates":{"latitude":"15.8279","longitude":"165.5740"},"timezone":{"offset":"+7:00","description":"Bangkok, Hanoi, Jakarta"}},"email":"ellie.carlson@example.com","login":{"uuid":"514c747f-7160-4ea3-9966-79dc88fe86d6","username":"heavykoala616","password":"hazard","salt":"hAb6NoJK","md5":"a8643e83f84c2a7af76c15b1be974507","sha1":"25a562bdb3b464d2a3311181e9b5769251d58bcd","sha256":"3ee2d8a8d0f68e5ef88a9bde33e5a55e220efe2d6fd189ed9939f40917c0f513"},"dob":{"date":"1990-06-18T09:36:51Z","age":28},"registered":{"date":"2014-09-16T14:03:08Z","age":3},"phone":"019467 39732","cell":"0719-138-001","id":{"name":"NINO","value":"MA 50 80 06 G"},"picture":{"large":"//:0","medium":"//:0","thumbnail":"//:0"},"nat":"GB"}]'
 
-        test('setting a property on the element works', function() {
-          // Create a test fixture
-          var element = fixture('ChangedPropertyTestFixture');
-          assert.equal(element.prop1, 'new-prop1');
-          var elementShadowRoot = element.shadowRoot;
-          var elementHeader = elementShadowRoot.querySelector('h2');
-          assert.equal(elementHeader.innerHTML, 'Hello new-prop1!');
-        }); */
-
+      setup(() => {
+        //localStorage.clear();
+        basicElement = fixture('BasicTestFixture');
+        storage = {};
+        debugger;
+        //sinon.stub(localStorage,'setItem');
+        //sinon.stub(localStorage,'getItem');
+        sinon.replace(localStorage,'setItem', (key,value) => storage[key] = value);
+        sinon.replace(localStorage,'getItem', key => storage[key]);
       });
-    </script>
 
+      test('list is empty', done => {
+        flush(() => {
+          // we loaded no contacts so empty contacts disclaimer should display
+          expect(basicElement.shadowRoot.querySelector('.empty-contacts')).to.not.be.null;
+          done();
+        });
+      });
 
-  </body>
+      test('adding a contact', done => {
+        // adding a contact loads a random one from the server so we need ajax
+        // first we'll setup a fake server to handle the request
+        const server = sinon.fakeServer.create();
+
+        // now we attach events to the ajax component to use our fakeServer
+        const ajax = basicElement.shadowRoot.querySelector('#ajaxNewContact');
+
+        // on request we will need to generate a response from our server
+        ajax.addEventListener('request', e => {
+          server.respond(
+            'GET',
+            /randomuser.me\/api\//, [
+              200,
+              { 'Content-Type': 'application/json' },
+              fakeResponse
+            ]
+          );
+        });
+
+        // on response we make our assertions and finish the test
+        ajax.addEventListener('response', e => {
+          // now loading finishes and new contact is automatically selected
+          expect(basicElement.loading).to.equal(false);
+          expect(basicElement.selectedContact).to.be.an('object');
+          done();
+        });
+
+        // since we didn't trigger new contact event yet the selected contact should not be set
+        expect(basicElement.selectedContact).to.not.be.ok;
+
+        // now we trigger the test by clicking our FAB for a new contact
+        basicElement.shadowRoot.querySelector('#fab').click();
+      });
+
+      test('listing contacts from localStorage', done => {
+        debugger;
+        // we add a fake contact list into localstorage
+        expect(basicElement.contacts).to.be.an('array');
+        expect(basicElement.contacts.length).to.equal(0);
+        localStorage.setItem('contacts', fakeContactList);
+        flush(() => {
+          // now the list should have been updated because localstorage keeps it in sync
+          expect(basicElement.contacts.length).to.equal(1);
+          done();
+        });
+      });
+
+      test('filtering the list by name', done => {
+        // we load our contact from localstorage
+        localStorage.setItem('contacts', fakeContactList);
+        flush(() => {
+          expect(basicElement.contacts.length).to.equal(1);
+          // we'll check it's actually visible
+          expect(basicElement.shadowRoot.querySelectorAll('polymer-contacts-contact').length).to.equal(1);
+          // lets now filter them by name
+          basicElement.filters = { name: 'anna' };
+          flush(() => {
+            // now it shouldn't be visible since our fake contact (ellie carlson) doesn't match the query
+            expect(basicElement.shadowRoot.querySelectorAll('polymer-contacts-contact').length).to.equal(0);
+            done();
+          });
+        });
+      });
+
+      test('selecting a contact', done => {
+        localStorage.setItem('contacts', fakeContactList);
+        flush(() => {
+          // we just loaded the contacts but none should be active
+          expect(basicElement.selectedContact).to.not.be.ok;
+          // let's click on it
+          basicElement.shadowRoot.querySelector('polymer-contacts-contact').click();
+          // now it should be out currently selected contact
+          expect(basicElement.selectedContact).to.be.ok;
+          expect(basicElement.selectedContact).to.be.an('object');
+          done();
+        });
+      });
+
+    });
+  </script>
+</body>
+
 </html>

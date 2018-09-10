@@ -2,6 +2,7 @@
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../../bower_components/paper-swatch-picker/paper-swatch-picker.html">
 <link rel="import" href="../../bower_components/web-animations-js/web-animations-next.min.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="polymer-contacts-theme-selector">
     <template>
@@ -9,26 +10,30 @@
             :host {
                 display: block;
             }
+
+            paper-button[raised] {
+                background-color: var(--polymer-contacts-app-primary-color-variant);
+                color: var(--polymer-contacts-app-primary-color-variant-font);
+            }
         </style>
 
         <paper-dialog id="colorDialog">
             <h2>Custom theme</h2>
-            <p>Choose your Primary, Accent and Secondary colors to theme the app.<br/> Text color will automatically change
-                to contrast the background colors.
+            <p>Choose your Primary, Accent and Secondary colors to theme the app.
+                <br /> Text color will automatically change to contrast the background colors.
             </p>
             <div>
                 Primary Color:
                 <paper-swatch-picker color="{{theme.primaryColor}}"></paper-swatch-picker>
             </div>
             <div>
-                Accent Color:
-                <paper-swatch-picker color="{{theme.accentColor}}"></paper-swatch-picker>
-            </div>
-            <div>
                 Secondary Color:
                 <paper-swatch-picker color="{{theme.secondaryColor}}"></paper-swatch-picker>
             </div>
-
+            <div>
+                Accent Color:
+                <paper-swatch-picker color="{{theme.accentColor}}"></paper-swatch-picker>
+            </div>
 
             <div class="buttons">
                 <paper-button dialog-dismiss>Close</paper-button>
@@ -48,9 +53,12 @@
             static get is() { return 'polymer-contacts-theme-selector'; }
             static get properties() {
                 return {
+                    theme: {
+                        type: Object
+                    }
                 };
             }
-            open(){
+            open() {
                 this.$.colorDialog.open();
             }
         }

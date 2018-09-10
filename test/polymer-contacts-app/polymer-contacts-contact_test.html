@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title>polymer-contacts-contact test</title>
+
+  <script src="../../../webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../../web-component-tester/browser.js"></script>
+
+  <link rel="import" href="../../src/polymer-contacts-app/polymer-contacts-contact.html">
+</head>
+
+<body>
+
+  <test-fixture id="NoContactFixture">
+    <template>
+      <polymer-contacts-contact></polymer-contacts-contact>
+    </template>
+  </test-fixture>
+
+  <test-fixture id="ContactFixture">
+    <template>
+      <polymer-contacts-contact contact='{"gender":"female","name":{"title":"miss","first":"ellie","last":"carlson"},"location":{"street":"4666 high street","city":"leicester","state":"west sussex","postcode":"WG0U 0WP","coordinates":{"latitude":"15.8279","longitude":"165.5740"},"timezone":{"offset":"+7:00","description":"Bangkok, Hanoi, Jakarta"}},"email":"ellie.carlson@example.com","login":{"uuid":"514c747f-7160-4ea3-9966-79dc88fe86d6","username":"heavykoala616","password":"hazard","salt":"hAb6NoJK","md5":"a8643e83f84c2a7af76c15b1be974507","sha1":"25a562bdb3b464d2a3311181e9b5769251d58bcd","sha256":"3ee2d8a8d0f68e5ef88a9bde33e5a55e220efe2d6fd189ed9939f40917c0f513"},"dob":{"date":"1990-06-18T09:36:51Z","age":28},"registered":{"date":"2014-09-16T14:03:08Z","age":3},"phone":"019467 39732","cell":"0719-138-001","id":{"name":"NINO","value":"MA 50 80 06 G"},"picture":{"large":"//:0","medium":"//:0","thumbnail":"//:0"},"nat":"GB"}'></polymer-contacts-contact>
+    </template>
+  </test-fixture>
+
+  <script>
+    suite('polymer-contacts-contact', function () {
+
+      setup(() => {
+        noContactElement = fixture('NoContactFixture');
+        contactElement = fixture('ContactFixture');
+      });
+
+      test('no contact set', () => {
+        // we didn't pass any contact to the element
+        expect(noContactElement.contact).to.not.be.ok;
+      });
+
+      test('a contact is set', () => {
+        // we passed our contact Ellie to the element so the computed properties should work now
+        expect(contactElement.contact).to.be.ok;
+        expect(contactElement.contact).to.be.an('object');
+        expect(contactElement.fullName).to.equal('Ellie Carlson');
+        expect(contactElement.firstLetter).to.equal('E');
+      });
+
+    });
+  </script>
+</body>
+
+</html>

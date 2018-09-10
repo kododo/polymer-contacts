@@ -53,9 +53,7 @@
         <iron-collapse id="filters-collapse" style="width:100%;">
             <div class="filter-container">
                 <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
-                <input type="button" value="MR" on-click="setTitleFilter" />
-                <input type="button" value="MISS" on-click="setTitleFilter" />
-                <label>Other :<input type="text" placeholder="Filter by other titles..." value="{{filters.title::input}}"
+                <label>Filter by title: <input type="text" placeholder="Write a title..." value="{{filters.title::input}}"
                     /></label>
             </div>
 
@@ -78,6 +76,9 @@
             static get is() { return 'polymer-contacts-filters'; }
             static get properties() {
                 return {
+                    filters: {
+                        type: Object
+                    }
                 };
             }
             _toggleFilters() {
