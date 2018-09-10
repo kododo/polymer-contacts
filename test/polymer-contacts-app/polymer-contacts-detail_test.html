@@ -61,23 +61,37 @@
       });
 
       // this generic callback will check if the event belongs to the type provided and end the test
-      const closeCallback = (done, event) => {
+      const testCallback = (done, eventType, event) => {
         expect(event).to.be.ok;
-        expect(event.type).to.equal('close-clicked');
+        expect(event.type).to.equal(eventType);
         done();
       }
 
       test('back button triggers close event', done => {
-        contactElement.addEventListener('close-clicked', closeCallback.bind(null, done));
+        contactElement.addEventListener('close-clicked', testCallback.bind(null, done, 'close-clicked'));
         flush(() => {
           contactElement.shadowRoot.querySelector('.back-button').click();
         });
       });
 
       test('cancel button triggers close event', done => {
-        contactElement.addEventListener('close-clicked', closeCallback.bind(null, done));
+        contactElement.addEventListener('close-clicked', testCallback.bind(null, done, 'close-clicked'));
         flush(() => {
           contactElement.shadowRoot.querySelector('[cancel-button]').click();
+        });
+      });
+
+      test('delete contact button triggers delete event', done => {
+        contactElement.addEventListener('contact-delete', testCallback.bind(null, done, 'contact-delete'));
+        flush(() => {
+          contactElement.shadowRoot.querySelector('[delete-button]').click();
+        });
+      });
+
+      test('save contact button triggers save event', done => {
+        contactElement.addEventListener('contact-saved', testCallback.bind(null, done, 'contact-saved'));
+        flush(() => {
+          contactElement.shadowRoot.querySelector('[save-button]').click();
         });
       });
 

@@ -19,9 +19,11 @@
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/image-icons.html">
 
-<!-- app helpers -->
+<!-- helper elements -->
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 
 <!-- app custom elements -->
 <link rel="import" href="polymer-contacts-contact.html">
@@ -164,7 +166,7 @@
           <!-- right app panel, with contact detail -->
           <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
             <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact"
-              on-contact-saved="_saveContact" contact="{{selectedContact}}"></polymer-contacts-detail>
+              on-contact-saved="_saveContact" contact="{{selectedContact}}" groups="[[filters.groups]]"></polymer-contacts-detail>
           </div>
         </div>
         <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add"></paper-fab>
@@ -228,15 +230,15 @@
         super.connectedCallback();
         //we define the filters here because they depend on groups
         this.filters = {
-          'groups': this.groups.map(g => ({ 'name': g, 'status': false })),
-          'name': '',
-          'title': ''
+          groups: this.groups.map(g => ({ 'name': g, 'status': false })),
+          name: '',
+          title: ''
         };
         this.theme = {
           primaryColor: '#6200ee',
           accentColor: '#3700b3',
           secondaryColor: '#03dac5'
-        }
+        };
       }
 
       _themeChanged(change) {
@@ -268,7 +270,7 @@
         if (this.filters.name && (item.name.first.toLowerCase() + item.name.last.toLowerCase()).indexOf(this.filters.name.toLowerCase()) == -1) {
           return false;
         }
-        if (this.filters.groups.some(fg => fg.status == true) && (!item.group || this.filters.groups.find(fg => fg.name == item.group).status == false)) {
+        if (this.filters.groups && this.filters.groups.some(fg => fg.status == true) && (!item.group || this.filters.groups.find(fg => fg.name == item.group).status == false)) {
           return false;
         }
 
@@ -294,7 +296,8 @@
           this.splice('contacts', index, 1, Object.assign({}, event.detail.contact));
           this.selectedContact = this.contacts[index];
         }
-        this.showToast('Changes made to the contact were saved');
+        this.showToast('Contact saved');
+        this._deselectContact();
       }
       _selectedContactChanged(newValue) {
         if (newValue) {
@@ -334,7 +337,11 @@
       }
       handleNewContactResponse() {
         this.loading = false;
-        this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0]);
+        // we assign a random group to the contact
+        const group = {
+          group: this.filters.groups[Math.floor(Math.random()*this.filters.groups.length)].name
+        };
+        this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0], group);
       }
       _openColorDialog() {
         this.$.themeSelector.open();
@@ -344,6 +351,7 @@
         if (index != -1) {
           this._deselectContact();
           this.splice('contacts', index, 1);
+          this.showToast('Contact deleted');
         }
       }
     }

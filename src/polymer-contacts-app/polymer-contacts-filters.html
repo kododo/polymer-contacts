@@ -6,7 +6,6 @@
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 
-
 <dom-module id="polymer-contacts-filters">
     <template>
         <style include="iron-flex iron-flex-factors iron-flex-alignment">
@@ -15,10 +14,9 @@
             }
 
             .searcher-container {
-                background: #eee;
+                background-color: var(--polymer-contacts-app-background-color);
                 margin: 10px;
-                height: 44px;
-                border-radius: 22px;
+                border-radius: 24px;
                 padding: 5px 9px 5px 5px;
                 box-sizing: border-box;
             }
@@ -34,37 +32,73 @@
             }
 
             .filter-container {
-                background: #eee;
-                padding: 20px;
-                margin: 20px;
+                padding: 10px;
+                margin: 5px 10px;
+                font-size: 0.8em;
+            }
+
+            [filters] {
+                @apply --layout-horizontal;
+                @apply --layout-center;
+            }
+            [filters] *{
+                margin: 0 5px 0 0;
+            }
+            [filters] paper-icon-button{
+                zoom:0.8;
+            }
+
+            #filters-collapse {
+                position: relative;
+                background-color: var(--polymer-contacts-app-background-color);
+            }
+            .input-title{
+                background-color: transparent;
+                border: 0px;
+                outline: 0px;
+                border-bottom: 1px solid;
+                width: 90%;
+            }
+            [title]{
+                text-transform: uppercase;
+                margin: 5px 0;
             }
         </style>
-        <div class="searcher-container layout horizontal center">
-            <paper-icon-button on-click="_removeFilters" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
-            <div class="search-paper-input-wrapper flex-10">
-                <paper-input value="{{filters.name}}"></paper-input>
-            </div>
-            <iron-icon class="flex" style="float:right; color: #666;" icon="search"></iron-icon>
-        </div>
-        <div class="filters-container" on-click="_toggleFilters">
-            <paper-icon-button icon="expand-more" title="more info" style="float:right;"></paper-icon-button>
-            <div style="padding:15px">Filter results</div>
-        </div>
-        <iron-collapse id="filters-collapse" style="width:100%;">
-            <div class="filter-container">
-                <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title" icon="block"></paper-icon-button>
-                <label>Filter by title: <input type="text" placeholder="Write a title..." value="{{filters.title::input}}"
-                    /></label>
-            </div>
+        <div class="searcher-container ">
+            <div class="layout horizontal center">
 
-            <div class="filter-container">
-                <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups" icon="block"></paper-icon-button>
-
-                <template is="dom-repeat" items="{{filters.groups}}">
-                    <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
-                </template>
+                <paper-icon-button on-click="_removeFilters" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
+                <div class="search-paper-input-wrapper flex-10">
+                    <paper-input value="{{filters.name}}"></paper-input>
+                </div>
+                <iron-icon class="flex" style="float:right; color: #666;" icon="search"></iron-icon>
+                <paper-icon-button on-click="_toggleFilters" data-filter="name" icon="more-vert"></paper-icon-button>
             </div>
-        </iron-collapse>
+            <iron-collapse id="filters-collapse" style="width:100%;">
+                <div class="filter-container">
+                    <div title>Filter by title</div>
+                    <div filters>
+                        <iron-input class="flex" bind-value="{{filters.title}}"><input class="input-title" type="text"
+                                placeholder="Write a title" /></iron-input>
+                        <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title"
+                            icon="block"></paper-icon-button>
+                    </div>
+                </div>
+
+                <div class="filter-container">
+                    <div title>Filter by group</div>
+                    <div filters>
+                        <div class="flex">
+                            <template is="dom-repeat" items="{{filters.groups}}">
+                                <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
+                            </template>
+                        </div>
+                        <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups"
+                            icon="block"></paper-icon-button>
+                    </div>
+                </div>
+            </iron-collapse>
+        </div>
     </template>
 
     <script>

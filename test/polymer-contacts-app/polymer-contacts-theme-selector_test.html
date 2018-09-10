@@ -23,7 +23,7 @@
 
   <test-fixture id="WithThemeFixture">
     <template>
-      <polymer-contacts-theme-selector theme=''></polymer-contacts-theme-selector>
+      <polymer-contacts-theme-selector theme='{"primaryColor":"PRIMARY", "secondaryColor": "SECONDARY", "accentColor": "ACCENT"}'></polymer-contacts-theme-selector>
     </template>
   </test-fixture>
 
@@ -35,7 +35,29 @@
         withThemeFixture = fixture('WithThemeFixture');
       });
 
-      test('')
+      test('dialog opens', () => {
+        // we call our component's open method and dialog should open
+        noThemeFixture.open();
+        expect(noThemeFixture.$.colorDialog.opened).to.equal(true);
+      });
+
+      test('primary color changes', ()=>{
+        // testing swatch pickers
+        withThemeFixture.shadowRoot.querySelector('[primary-color-picker]').color = 'black';
+        expect(withThemeFixture.theme.primaryColor).to.equal('black');
+      });
+
+      test('secondary color changes', ()=>{
+        // testing swatch pickers
+        withThemeFixture.shadowRoot.querySelector('[secondary-color-picker]').color = 'red';
+        expect(withThemeFixture.theme.secondaryColor).to.equal('red');
+      });
+
+      test('accent color changes', ()=>{
+        // testing swatch pickers
+        withThemeFixture.shadowRoot.querySelector('[accent-color-picker]').color = 'blue';
+        expect(withThemeFixture.theme.accentColor).to.equal('blue');
+      });
 
     });
   </script>

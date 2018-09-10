@@ -7,6 +7,9 @@
 <link rel="import" href="../../bower_components/app-layout/app-box/app-box.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
 
 <dom-module id="polymer-contacts-detail">
     <template>
@@ -104,7 +107,7 @@
                 display: none;
             }
 
-            paper-button[primary] {
+            paper-button[save-button] {
                 background-color: var(--polymer-contacts-app-primary-color-variant);
                 color: var(--polymer-contacts-app-primary-color-variant-font);
             }
@@ -122,23 +125,28 @@
                 overflow-y: scroll;
             }
 
-            .back-button{
+            .back-button {
                 margin-right: 10px;
             }
-            [delete-button]{
-                float:right;
+
+            [delete-button] {
+                float: right;
             }
-            [main-title]{
+
+            [main-title] {
                 @apply --layout-flex;
             }
+
             @media screen and (min-width: 768px) {
                 :host {
                     width: 50%;
                     max-width: 472px;
                 }
+
                 .only-mobile {
                     display: none;
                 }
+
                 .only-desktop {
                     display: block;
                 }
@@ -181,11 +189,20 @@
                         <paper-input label="Phone" class="field" value="{{contact.phone}}"></paper-input>
                         <paper-input label="Cell" class="field" value="{{contact.cell}}"></paper-input>
                     </div>
-                   
+                    <div class="flied-row">
+                        <paper-dropdown-menu label="Group">
+                            <paper-listbox id="groupList" slot="dropdown-content" selected="{{selectedGroup}}">
+                                <paper-item>Sin grupo</paper-item>
+                                <template is="dom-repeat" items="{{groups}}">
+                                    <paper-item>[[item.name]]</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
                 </div>
                 <div class="layout horizontal end-justified bottom-toolbar">
                     <paper-button cancel-button on-click="_back">Cancel</paper-button>
-                    <paper-button raised primary on-click="_save">Save</paper-button>
+                    <paper-button raised save-button on-click="_save">Save</paper-button>
                 </div>
             </div>
         </template>
@@ -213,11 +230,34 @@
                         type: String,
                         value: '',
                         computed: '_fullName(contact.name.first, contact.name.last)'
+                    },
+                    groups: {
+                        type: Array
                     }
                 };
             }
+            static get observers(){
+                return [
+                    '_groupsChanged(groups,contact)'
+                ]
+            }
             connectedCallback() {
                 super.connectedCallback();
+                //this.$.groupList.selected = this.groups.indexOf(this.contact.group);
+            }
+            _groupsChanged(groups,contact){
+                if (groups && contact){
+                    //const index = contact.group ? (groups.findIndex(group => group.name == contact.group)+1) : 0;
+                    let index = 0;
+                    if (contact.group){
+                        index = groups.forEach((group,groupIndex) => {
+                            if (group.name == contact.group){
+                                index = groupIndex + 1;
+                            }
+                        });
+                    }
+                    this.selectedGroup = index;
+                }
             }
             _back() {
                 this.contact = undefined;
@@ -230,9 +270,11 @@
                 return [].slice.call(arguments).map(s => s ? s.charAt(0).toUpperCase() + s.substr(1) : '').join(' ');
             }
             _save() {
+                console.log(this.selectedGroup);
+                this
                 this.dispatchEvent(new CustomEvent('contact-saved', { detail: { contact: this.contact }, bubbles: true, composed: true }));
             }
-            _deleteContact(){
+            _deleteContact() {
                 this.dispatchEvent(new CustomEvent('contact-delete', { detail: { contact: this.contact }, bubbles: true, composed: true }));
             }
         }
