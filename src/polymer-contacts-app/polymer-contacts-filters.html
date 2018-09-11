@@ -5,6 +5,7 @@
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 <dom-module id="polymer-contacts-filters">
     <template>
@@ -40,6 +41,7 @@
             [filters] {
                 @apply --layout-horizontal;
                 @apply --layout-center;
+                margin-left: 15px;
             }
             [filters] *{
                 margin: 0 5px 0 0;
@@ -62,6 +64,15 @@
             [title]{
                 text-transform: uppercase;
                 margin: 5px 0;
+                opacity: 0.7;
+            }
+            paper-button[data-order]{
+                color: #000;
+                background-color: transparent;
+            }
+            paper-button[data-order][raised]{
+                background-color: var(--polymer-contacts-app-secondary-color);
+                color: var(--polymer-contacts-app-secondary-color-font);
             }
         </style>
         <div class="searcher-container ">
@@ -90,13 +101,23 @@
                     <div filters>
                         <div class="flex">
                             <template is="dom-repeat" items="{{filters.groups}}">
-                                <paper-checkbox on-change="groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
+                                <paper-checkbox on-change="_groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
                             </template>
                         </div>
-                        <paper-icon-button disabled="[[!filters.groups]]" on-click="_removeFilters" data-filter="groups"
+                        <paper-icon-button disabled="[[groupsButtonDisabled]]" on-click="_removeFilters" data-filter="groups"
                             icon="block"></paper-icon-button>
                     </div>
                 </div>
+
+                <div class="filter-container">
+                    <div title>Order by</div>
+                    <div filters>
+                        <paper-button on-click="_changeOrder" data-order="name.first">First Name</paper-button>
+                        <paper-button on-click="_changeOrder" data-order="name.last">Last Name</paper-button>
+                        <paper-button on-click="_changeOrder" data-order="group">Group</paper-button>
+                    </div>
+                </div>
+
             </iron-collapse>
         </div>
     </template>
@@ -112,8 +133,23 @@
                 return {
                     filters: {
                         type: Object
+                    },
+                    groupsButtonDisabled: {
+                        type: Boolean,
+                        computed: '_disableGroupButtons(filters.groups.*)'
                     }
                 };
+            }
+            static get observers(){
+                return [
+                    '_currentOrderChanged(filters.order.*)'
+                ]
+            }
+            _disableGroupButtons(changes){
+                if (!this.filters || !this.filters.groups || !this.filters.groups.length){
+                    return true;
+                }
+                return !this.filters.groups.some(g => g.status == true);
             }
             _toggleFilters() {
                 this.$['filters-collapse'].toggle();
@@ -127,6 +163,34 @@
                 } else {
                     this.set(`filters.${filter}`, '');
                 }
+            }
+            _groupFilterChanged(event){
+                const groupIndex = this.filters.groups.findIndex(g => g.name == event.model.item['name']);
+                this.set(`filters.groups.${groupIndex}.status`,!this.filters.groups[groupIndex].status);
+            }
+            _changeOrder(event){
+                const order = event.currentTarget.dataset['order'];
+                if (this.filters.order.property != order){
+                    // it's a different property, we set the new and ascending order
+                    this.set('filters.order', {
+                      property:  event.currentTarget.dataset['order'],
+                      ascending: true
+                    });
+                }else{
+                    // same property, reverts order
+                    this.set('filters.order.ascending', !this.filters.order.ascending);
+                }
+            }
+            _currentOrderChanged(){
+                if (!this.filters || !this.filters.order){
+                    return;
+                }
+                const buttons = [].slice.call(this.shadowRoot.querySelectorAll("paper-button[data-order]"));
+                // unraise all
+                buttons.forEach(button => button.raised = false);
+                // raise current
+                const current = buttons.find(button => button.dataset['order'] == this.filters.order.property);
+                current && (current.raised = true);
             }
         }
 

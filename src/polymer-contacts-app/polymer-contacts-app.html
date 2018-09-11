@@ -53,6 +53,8 @@
 
       #body {
         display: block;
+        height: 100vh;
+        position: relative;
       }
 
       paper-fab {
@@ -158,7 +160,7 @@
               <template is="dom-if" if="[[!contacts.length]]">
                 <div class="empty-contacts">Your contacts list is empty :(</div>
               </template>
-              <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList">
+              <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList" sort="_sortContactList">
                 <polymer-contacts-contact on-click="_selectContact" contact="{{item}}"></polymer-contacts-contact>
               </template>
             </div>
@@ -232,7 +234,11 @@
         this.filters = {
           groups: this.groups.map(g => ({ 'name': g, 'status': false })),
           name: '',
-          title: ''
+          title: '',
+          order: {
+            property: 'name.first',
+            ascending: true
+          }
         };
         this.theme = {
           primaryColor: '#6200ee',
@@ -264,7 +270,7 @@
 
       _filterContactList(item) {
 
-        if (this.filters.title && item.name.title != this.filters.title) {
+        if (this.filters.title && item.name.title.toLowerCase() != this.filters.title.toLowerCase()) {
           return false;
         }
         if (this.filters.name && (item.name.first.toLowerCase() + item.name.last.toLowerCase()).indexOf(this.filters.name.toLowerCase()) == -1) {
@@ -278,6 +284,12 @@
       }
       _filtersChanged(change) {
         this.$.contactListRepeat.render();
+      }
+      _sortContactList(a,b){
+        const levels = this.filters.order.property.split('.');
+        const getProp = obj => levels.reduce((acc,next) => acc && acc[next], obj);
+        const pa = getProp(a), pb = getProp(b);
+        return pa == pb ? 0 : this.filters.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
       }
 
       _selectContact(event) {

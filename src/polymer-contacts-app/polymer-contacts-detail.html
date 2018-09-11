@@ -10,6 +10,7 @@
 <link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/polymer/lib/mixins/gesture-event-listeners.html">
 
 <dom-module id="polymer-contacts-detail">
     <template>
@@ -19,6 +20,8 @@
                 width: 100%;
                 height: 100%;
                 position: fixed;
+                opacity: 1;
+                transform: translate3d(0,0,0);
             }
 
             .contact-photo {
@@ -118,6 +121,8 @@
                 width: 100%;
                 padding: 15px;
                 box-sizing: border-box;
+                z-index: 1;
+                background-color: var(--polymer-contacts-app-background-color);
             }
 
             .body {
@@ -137,10 +142,22 @@
                 @apply --layout-flex;
             }
 
+            paper-item{
+                width: 250px;
+            }
+
+            @media screen and (max-width: 768px) {
+                .bottom-toolbar{
+                    position: sticky;
+                }
+            }
+
             @media screen and (min-width: 768px) {
                 :host {
                     width: 50%;
                     max-width: 472px;
+                    opacity: 1 !important;
+                    left: auto !important;
                 }
 
                 .only-mobile {
@@ -189,10 +206,10 @@
                         <paper-input label="Phone" class="field" value="{{contact.phone}}"></paper-input>
                         <paper-input label="Cell" class="field" value="{{contact.cell}}"></paper-input>
                     </div>
-                    <div class="flied-row">
-                        <paper-dropdown-menu label="Group">
+                    <div class="field-row">
+                        <paper-dropdown-menu label="Group" class="field flex" horizontal-align="left" vertical-align="top" vertical-offset="55" dynamic-align="true">
                             <paper-listbox id="groupList" slot="dropdown-content" selected="{{selectedGroup}}">
-                                <paper-item>Sin grupo</paper-item>
+                                <paper-item>No group</paper-item>
                                 <template is="dom-repeat" items="{{groups}}">
                                     <paper-item>[[item.name]]</paper-item>
                                 </template>
@@ -213,7 +230,7 @@
          * @customElement
          * @polymer
          */
-        class PolymerContactsDetail extends Polymer.Element {
+        class PolymerContactsDetail extends Polymer.GestureEventListeners(Polymer.Element) {
             static get is() { return 'polymer-contacts-detail'; }
             static get properties() {
                 return {
@@ -233,10 +250,18 @@
                     },
                     groups: {
                         type: Array
+                    },
+                    selectedGroup: {
+                        type: Number,
+                        value: 0
+                    },
+                    selectedGroupName: {
+                        type: String,
+                        computed: '_getGroupName(selectedGroup)'
                     }
                 };
             }
-            static get observers(){
+            static get observers() {
                 return [
                     '_groupsChanged(groups,contact)'
                 ]
@@ -245,13 +270,39 @@
                 super.connectedCallback();
                 //this.$.groupList.selected = this.groups.indexOf(this.contact.group);
             }
-            _groupsChanged(groups,contact){
-                if (groups && contact){
-                    //const index = contact.group ? (groups.findIndex(group => group.name == contact.group)+1) : 0;
+
+            constructor() {
+                super();
+                // tracking (swipe) events
+                Polymer.Gestures.addListener(this, 'track', e => this.handleTrack(e));
+            }
+            
+            handleTrack(e) {
+                // we only consider swipes to the right
+                if(e.detail.dx > 50){
+                    this.style = `left:${e.detail.dx/2}px; opacity: ${1-(e.detail.dx/500)}`;
+                }
+                // when swipe ends
+                if (e.detail.state == 'end'){
+                    // if it's enough distance we trigger 'back' event
+                    if(e.detail.dx > 100 && Math.abs(e.detail.dy) < 100) {
+                        this._back();
+                    }
+                    // reset styles
+                    this.style = '';
+                } 
+            }
+
+            _getGroupName(selectedGroup){
+                return selectedGroup == 0 ? '' : this.groups[selectedGroup-1].name;
+            }
+
+            _groupsChanged(groups, contact) {
+                if (groups && contact) {
                     let index = 0;
-                    if (contact.group){
-                        index = groups.forEach((group,groupIndex) => {
-                            if (group.name == contact.group){
+                    if (contact.group) {
+                        groups.forEach((group, groupIndex) => {
+                            if (group.name == contact.group) {
                                 index = groupIndex + 1;
                             }
                         });
@@ -270,8 +321,7 @@
                 return [].slice.call(arguments).map(s => s ? s.charAt(0).toUpperCase() + s.substr(1) : '').join(' ');
             }
             _save() {
-                console.log(this.selectedGroup);
-                this
+                this.contact.group = this.selectedGroupName;
                 this.dispatchEvent(new CustomEvent('contact-saved', { detail: { contact: this.contact }, bubbles: true, composed: true }));
             }
             _deleteContact() {
