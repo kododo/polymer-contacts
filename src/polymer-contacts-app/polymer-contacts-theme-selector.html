@@ -3,17 +3,38 @@
 <link rel="import" href="../../bower_components/paper-swatch-picker/paper-swatch-picker.html">
 <link rel="import" href="../../bower_components/web-animations-js/web-animations-next.min.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 
 <dom-module id="polymer-contacts-theme-selector">
     <template>
-        <style>
+        <style include="iron-flex iron-flex-factors iron-flex-alignment">
             :host {
                 display: block;
             }
 
+            paper-button{
+                color: #000;
+            }
             paper-button[raised] {
-                background-color: var(--polymer-contacts-app-primary-color-variant);
-                color: var(--polymer-contacts-app-primary-color-variant-font);
+                background-color: var(--polymer-contacts-app-accent-color);
+                color: var(--polymer-contacts-app-accent-color-font);
+            }
+            .selector{
+                text-align: center;
+                border-radius: 5px;
+                padding: 5px 12px;
+            }
+            .primary{
+                background-color:var(--polymer-contacts-app-primary-color);
+                color:var(--polymer-contacts-app-primary-color-font);
+            }
+            .secondary{
+                background-color:var(--polymer-contacts-app-secondary-color);
+                color:var(--polymer-contacts-app-secondary-color-font);
+            }
+            .accent{
+                background-color:var(--polymer-contacts-app-accent-color);
+                color:var(--polymer-contacts-app-accent-color-font);
             }
         </style>
 
@@ -22,16 +43,16 @@
             <p>Choose your Primary, Accent and Secondary colors to theme the app.
                 <br /> Text color will automatically change to contrast the background colors.
             </p>
-            <div>
-                Primary Color:
+            <div class="layout horizontal center-justified center">
+                <div class="selector primary">Primary Color</div>
                 <paper-swatch-picker primary-color-picker color="{{theme.primaryColor}}"></paper-swatch-picker>
             </div>
-            <div>
-                Secondary Color:
+            <div class="layout horizontal center-justified center">
+                <div class="selector secondary">Secondary Color</div>
                 <paper-swatch-picker secondary-color-picker color="{{theme.secondaryColor}}"></paper-swatch-picker>
             </div>
-            <div>
-                Accent Color:
+            <div class="layout horizontal center-justified center">
+                <div class="selector accent">Accent Color</div>
                 <paper-swatch-picker accent-color-picker color="{{theme.accentColor}}"></paper-swatch-picker>
             </div>
 

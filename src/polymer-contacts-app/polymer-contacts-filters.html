@@ -22,13 +22,20 @@
                 box-sizing: border-box;
             }
 
+            .search-icon{
+                color: #666;
+                margin: 0 12px;
+            }
+
+            .remove-search-icon{
+                margin-left: 15px;
+            }
+
             .search-paper-input-wrapper {
                 position: relative;
             }
 
             .search-paper-input-wrapper paper-input {
-                position: absolute;
-                top: -41px;
                 width: 100%;
             }
 
@@ -44,7 +51,7 @@
                 margin-left: 15px;
             }
             [filters] *{
-                margin: 0 5px 0 0;
+                margin: 0 10px 0 0;
             }
             [filters] paper-icon-button{
                 zoom:0.8;
@@ -71,18 +78,22 @@
                 background-color: transparent;
             }
             paper-button[data-order][raised]{
-                background-color: var(--polymer-contacts-app-secondary-color);
-                color: var(--polymer-contacts-app-secondary-color-font);
+                background-color: var(--polymer-contacts-app-accent-color);
+                color: var(--polymer-contacts-app-accent-color-font);
+            }
+            paper-checkbox{
+                --paper-checkbox-checked-color:	var(--polymer-contacts-app-accent-color);
+                --paper-checkbox-checked-ink-color: var(--polymer-contacts-app-accent-color);
+                --paper-checkbox-checkmark-color: var(--polymer-contacts-app-accent-color-font)
             }
         </style>
         <div class="searcher-container ">
             <div class="layout horizontal center">
-
-                <paper-icon-button on-click="_removeFilters" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
+                <iron-icon class="flex search-icon" icon="search"></iron-icon>
                 <div class="search-paper-input-wrapper flex-10">
-                    <paper-input value="{{filters.name}}"></paper-input>
+                    <paper-input label="Search by name" no-label-float value="{{filters.name}}"></paper-input>
                 </div>
-                <iron-icon class="flex" style="float:right; color: #666;" icon="search"></iron-icon>
+                <paper-icon-button on-click="_removeFilters" class="remove-search-icon" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
                 <paper-icon-button on-click="_toggleFilters" data-filter="name" icon="more-vert"></paper-icon-button>
             </div>
             <iron-collapse id="filters-collapse" style="width:100%;">
@@ -92,7 +103,7 @@
                         <iron-input class="flex" bind-value="{{filters.title}}"><input class="input-title" type="text"
                                 placeholder="Write a title" /></iron-input>
                         <paper-icon-button disabled="[[!filters.title]]" on-click="_removeFilters" data-filter="title"
-                            icon="block"></paper-icon-button>
+                            icon="cancel"></paper-icon-button>
                     </div>
                 </div>
 
@@ -105,7 +116,7 @@
                             </template>
                         </div>
                         <paper-icon-button disabled="[[groupsButtonDisabled]]" on-click="_removeFilters" data-filter="groups"
-                            icon="block"></paper-icon-button>
+                            icon="cancel"></paper-icon-button>
                     </div>
                 </div>
 

@@ -38,12 +38,27 @@
         display: block;
         font-family: sans-serif;
         --polymer-contacts-app-primary-color: #6200ee;
-        --polymer-contacts-app-primary-color-variant: #3700b3;
+        --polymer-contacts-app-accent-color: #3700b3;
         --polymer-contacts-app-secondary-color: #03dac5;
         --polymer-contacts-app-background-color: #e1e1e1;
         --polymer-contacts-app-primary-color-font: #fff;
-        --polymer-contacts-app-primary-color-variant-font: #fff;
+        --polymer-contacts-app-accent-color-font: #fff;
         --polymer-contacts-app-secondary-color-font: #fff;
+        --paper-input-container-focus-color: var(--polymer-contacts-app-accent-color);
+      }
+
+      ::-webkit-scrollbar-track {
+        border-radius: 10px;
+        width: 0.3em;
+      }
+
+      ::-webkit-scrollbar {
+        width: 0.3em;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background-color: #999;
       }
 
       app-header {
@@ -53,7 +68,7 @@
 
       #body {
         display: block;
-        height: 100vh;
+        height: 90vh;
         position: relative;
       }
 
@@ -61,8 +76,8 @@
         position: fixed;
         bottom: 5%;
         right: 5%;
-        background-color: var(--polymer-contacts-app-primary-color-variant);
-        color: var(--polymer-contacts-app-primary-color-variant-font);
+        background-color: var(--polymer-contacts-app-accent-color);
+        color: var(--polymer-contacts-app-accent-color-font);
       }
 
       .main-app-panel {
@@ -99,6 +114,23 @@
         margin: 50px auto;
       }
 
+      .contact-list {
+        max-height: 80vh;
+        overflow-y: scroll;
+      }
+
+      .hidden-contacts {
+        text-align: center;
+        margin: 20px;
+        line-height: 25px;
+        font-size: 0.9em;
+        color: #666;
+      }
+
+      .hidden-contacts a {
+        color: var(--polymer-contacts-app-accent-color);
+      }
+
       @media screen and (min-width: 768px) {
         .main-app-panel {
           @apply --layout-flex-6;
@@ -115,7 +147,7 @@
         #fab.mobileOff {
           display: none;
         }
-      }
+      }      
 
       @media screen and (min-width: 1024px) {
         #body {
@@ -129,6 +161,12 @@
 
         #fab.mobileOff {
           display: block;
+        }
+      }
+      
+      @media screen and (min-width: 1440px) {
+        #fab{
+          right: 15%;
         }
       }
     </style>
@@ -156,19 +194,24 @@
             <!-- filters -->
             <polymer-contacts-filters filters="{{filters}}"></polymer-contacts-filters>
             <!-- contacts list -->
-            <div role="listbox">
+            <div role="listbox" class="contact-list">
               <template is="dom-if" if="[[!contacts.length]]">
                 <div class="empty-contacts">Your contacts list is empty :(</div>
               </template>
-              <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList" sort="_sortContactList">
+              <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList" sort="_sortContactList"
+                on-rendered-item-count-changed="_listRendered">
                 <polymer-contacts-contact on-click="_selectContact" contact="{{item}}"></polymer-contacts-contact>
+              </template>
+              <template is="dom-if" if="{{hiddenContacts}}">
+                <div class="hidden-contacts"><b>[[hiddenContacts]]</b> more contacts don't match the filters<br/><a href="void(0)"
+                    on-click="_removeAllFilters">Remove all filters</a></div>
               </template>
             </div>
           </div>
           <!-- right app panel, with contact detail -->
           <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
-            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact"
-              on-contact-saved="_saveContact" contact="{{selectedContact}}" groups="[[filters.groups]]"></polymer-contacts-detail>
+            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact" on-contact-saved="_saveContact"
+              contact="{{selectedContact}}" groups="[[filters.groups]]"></polymer-contacts-detail>
           </div>
         </div>
         <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add"></paper-fab>
@@ -218,6 +261,10 @@
           filters: {
             type: Object,
             value: () => ({})
+          },
+          hiddenContacts: {
+            type: Number,
+            value: 0
           }
         };
       }
@@ -231,7 +278,7 @@
       connectedCallback() {
         super.connectedCallback();
         //we define the filters here because they depend on groups
-        this.filters = {
+        this.defaultFilters = {
           groups: this.groups.map(g => ({ 'name': g, 'status': false })),
           name: '',
           title: '',
@@ -240,6 +287,8 @@
             ascending: true
           }
         };
+        this.filters = Object.assign({}, this.defaultFilters);
+        this.filters.groups = [].slice.call(this.defaultFilters.groups);
         this.theme = {
           primaryColor: '#6200ee',
           accentColor: '#3700b3',
@@ -259,10 +308,10 @@
         //Calculate the fonts based on contrast
         this.updateStyles({
           '--polymer-contacts-app-primary-color': this.theme.primaryColor,
-          '--polymer-contacts-app-primary-color-variant': this.theme.accentColor,
+          '--polymer-contacts-app-accent-color': this.theme.accentColor,
           '--polymer-contacts-app-secondary-color': this.theme.secondaryColor,
           '--polymer-contacts-app-primary-color-font': getContrastYIQ(this.theme.primaryColor),
-          '--polymer-contacts-app-primary-color-variant-font': getContrastYIQ(this.theme.accentColor),
+          '--polymer-contacts-app-accent-color-font': getContrastYIQ(this.theme.accentColor),
           '--polymer-contacts-app-secondary-color-font': getContrastYIQ(this.theme.secondaryColor)
         });
 
@@ -285,9 +334,9 @@
       _filtersChanged(change) {
         this.$.contactListRepeat.render();
       }
-      _sortContactList(a,b){
+      _sortContactList(a, b) {
         const levels = this.filters.order.property.split('.');
-        const getProp = obj => levels.reduce((acc,next) => acc && acc[next], obj);
+        const getProp = obj => levels.reduce((acc, next) => acc && acc[next], obj);
         const pa = getProp(a), pb = getProp(b);
         return pa == pb ? 0 : this.filters.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
       }
@@ -351,7 +400,7 @@
         this.loading = false;
         // we assign a random group to the contact
         const group = {
-          group: this.filters.groups[Math.floor(Math.random()*this.filters.groups.length)].name
+          group: this.filters.groups[Math.floor(Math.random() * this.filters.groups.length)].name
         };
         this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0], group);
       }
@@ -365,6 +414,14 @@
           this.splice('contacts', index, 1);
           this.showToast('Contact deleted');
         }
+      }
+      _listRendered(event) {
+        this.hiddenContacts = this.contacts.length - event.currentTarget.renderedItemCount;
+      }
+      _removeAllFilters(event) {
+        event.preventDefault();
+        this.set('filters', Object.assign({}, this.defaultFilters));
+        this.filters.groups.forEach((g, index) => this.set(`filters.groups.${index}.status`, false));
       }
     }
 
