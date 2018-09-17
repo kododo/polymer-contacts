@@ -111,7 +111,7 @@
                     <div title>Filter by group</div>
                     <div filters>
                         <div class="flex">
-                            <template is="dom-repeat" items="{{filters.groups}}">
+                            <template is="dom-repeat" items="{{groups}}">
                                 <paper-checkbox on-change="_groupFilterChanged" checked="[[item.status]]">[[item.name]]</paper-checkbox>
                             </template>
                         </div>
@@ -142,25 +142,29 @@
             static get is() { return 'polymer-contacts-filters'; }
             static get properties() {
                 return {
-                    filters: {
-                        type: Object
-                    },
+                    filters: Object,
+                    groups: Array,
+                    order: Object,
                     groupsButtonDisabled: {
                         type: Boolean,
-                        computed: '_disableGroupButtons(filters.groups.*)'
+                        computed: '_disableGroupButtons(groups.*)'
                     }
                 };
             }
+            connectedCallback(){
+                super.connectedCallback();
+                console.log(this.groups);
+            }
             static get observers(){
                 return [
-                    '_currentOrderChanged(filters.order.*)'
+                    '_currentOrderChanged(order.*)'
                 ]
             }
-            _disableGroupButtons(changes){
-                if (!this.filters || !this.filters.groups || !this.filters.groups.length){
+            _disableGroupButtons(){
+                if (!this.filters || !this.groups || !this.groups.length){
                     return true;
                 }
-                return !this.filters.groups.some(g => g.status == true);
+                return !this.groups.some(g => g.status == true);
             }
             _toggleFilters() {
                 this.$['filters-collapse'].toggle();
@@ -168,39 +172,37 @@
             _removeFilters(event) {
                 const filter = event.target.dataset["filter"];
                 if (filter == 'groups') {
-                    this.filters.groups.forEach((fg, index) => {
-                        this.set(`filters.groups.${index}.status`, false);
+                    this.groups.forEach((fg, index) => {
+                        this.set(`groups.${index}.status`, false);
                     });
                 } else {
                     this.set(`filters.${filter}`, '');
                 }
             }
             _groupFilterChanged(event){
-                const groupIndex = this.filters.groups.findIndex(g => g.name == event.model.item['name']);
-                this.set(`filters.groups.${groupIndex}.status`,!this.filters.groups[groupIndex].status);
+                const groupIndex = this.groups.findIndex(g => g.name == event.model.item['name']);
+                this.set(`groups.${groupIndex}.status`,!this.groups[groupIndex].status);
             }
             _changeOrder(event){
                 const order = event.currentTarget.dataset['order'];
-                if (this.filters.order.property != order){
+                if (this.order.property != order){
                     // it's a different property, we set the new and ascending order
-                    this.set('filters.order', {
-                      property:  event.currentTarget.dataset['order'],
-                      ascending: true
-                    });
+                    this.set('order.property',event.currentTarget.dataset['order']);
+                    this.set('order.ascending', true);
                 }else{
                     // same property, reverts order
-                    this.set('filters.order.ascending', !this.filters.order.ascending);
+                    this.set('order.ascending', !this.order.ascending);
                 }
             }
             _currentOrderChanged(){
-                if (!this.filters || !this.filters.order){
+                if (!this.filters || !this.order){
                     return;
                 }
                 const buttons = [].slice.call(this.shadowRoot.querySelectorAll("paper-button[data-order]"));
                 // unraise all
                 buttons.forEach(button => button.raised = false);
                 // raise current
-                const current = buttons.find(button => button.dataset['order'] == this.filters.order.property);
+                const current = buttons.find(button => button.dataset['order'] == this.order.property);
                 current && (current.raised = true);
             }
         }

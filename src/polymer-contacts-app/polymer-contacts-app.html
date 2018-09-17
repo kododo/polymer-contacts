@@ -147,7 +147,7 @@
         #fab.mobileOff {
           display: none;
         }
-      }      
+      }
 
       @media screen and (min-width: 1024px) {
         #body {
@@ -163,9 +163,9 @@
           display: block;
         }
       }
-      
+
       @media screen and (min-width: 1440px) {
-        #fab{
+        #fab {
           right: 15%;
         }
       }
@@ -192,7 +192,7 @@
           <!-- left app panel, with filters and contacts list -->
           <div id="contactListPanel" class="main-app-panel contact-list-container">
             <!-- filters -->
-            <polymer-contacts-filters filters="{{filters}}"></polymer-contacts-filters>
+            <polymer-contacts-filters filters="{{filters}}" groups="{{groups}}" order="{{order}}"></polymer-contacts-filters>
             <!-- contacts list -->
             <div role="listbox" class="contact-list">
               <template is="dom-if" if="[[!contacts.length]]">
@@ -203,15 +203,15 @@
                 <polymer-contacts-contact on-click="_selectContact" contact="{{item}}"></polymer-contacts-contact>
               </template>
               <template is="dom-if" if="{{hiddenContacts}}">
-                <div class="hidden-contacts"><b>[[hiddenContacts]]</b> more contacts don't match the filters<br/><a href="void(0)"
-                    on-click="_removeAllFilters">Remove all filters</a></div>
+                <div class="hidden-contacts"><b>[[hiddenContacts]]</b> more contacts don't match the filters<br /><a
+                    href="void(0)" on-click="_removeAllFilters">Remove all filters</a></div>
               </template>
             </div>
           </div>
           <!-- right app panel, with contact detail -->
           <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
-            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact" on-contact-saved="_saveContact"
-              contact="{{selectedContact}}" groups="[[filters.groups]]"></polymer-contacts-detail>
+            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact"
+              on-contact-saved="_saveContact" contact="{{selectedContact}}" groups="[[groups]]"></polymer-contacts-detail>
           </div>
         </div>
         <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add"></paper-fab>
@@ -223,7 +223,7 @@
 
     <!-- app helpers: toasts, ajax, etc -->
     <paper-toast id="toast"></paper-toast>
-    <iron-ajax id="ajaxNewContact" on-response="handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/"></iron-ajax>
+    <iron-ajax id="ajaxNewContact" on-response="_handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/"></iron-ajax>
     <app-localstorage-document key="contacts" data="{{contacts}}"></app-localstorage-document>
     <app-localstorage-document key="theme" data="{{theme}}"></app-localstorage-document>
 
@@ -238,13 +238,14 @@
       static get is() { return 'polymer-contacts-app'; }
       static get properties() {
         return {
-          loading: {
-            type: Boolean,
-            value: false
-          },
+          loading: Boolean,
           groups: {
             type: Array,
-            value: () => ['Favorite', 'Family', 'Friends']
+            value: () => [
+              { name: 'Favorite', status: false },
+              { name: 'Family', status: false },
+              { name: 'Friends', status: false }
+            ]
           },
           contacts: {
             type: Array,
@@ -262,33 +263,28 @@
             type: Object,
             value: () => ({})
           },
-          hiddenContacts: {
-            type: Number,
-            value: 0
+          order: {
+            type: Object,
+            value: () => ({
+              property: "name.first",
+              ascending: true
+            })
           }
         };
       }
       static get observers() {
         return [
-          '_filtersChanged(filters.*)',
+          '_renderList(filters.*,groups.*,order.*)',
           '_themeChanged(theme.*)'
         ]
       }
 
       connectedCallback() {
         super.connectedCallback();
-        //we define the filters here because they depend on groups
-        this.defaultFilters = {
-          groups: this.groups.map(g => ({ 'name': g, 'status': false })),
-          name: '',
-          title: '',
-          order: {
-            property: 'name.first',
-            ascending: true
-          }
-        };
-        this.filters = Object.assign({}, this.defaultFilters);
-        this.filters.groups = [].slice.call(this.defaultFilters.groups);
+        this._loadDefaults();
+      }
+
+      _loadDefaults() {
         this.theme = {
           primaryColor: '#6200ee',
           accentColor: '#3700b3',
@@ -325,20 +321,26 @@
         if (this.filters.name && (item.name.first.toLowerCase() + item.name.last.toLowerCase()).indexOf(this.filters.name.toLowerCase()) == -1) {
           return false;
         }
-        if (this.filters.groups && this.filters.groups.some(fg => fg.status == true) && (!item.group || this.filters.groups.find(fg => fg.name == item.group).status == false)) {
-          return false;
+        if (this.groups && this.groups.some(fg => fg.status == true)) {
+          if (!item.group) {
+            return false;
+          }
+          const itemGroup = this.groups.find(fg => fg.name == item.group);
+          if (!itemGroup || !itemGroup.status) {
+            return false;
+          }
         }
 
         return true;
       }
-      _filtersChanged(change) {
+      _renderList() {
         this.$.contactListRepeat.render();
       }
       _sortContactList(a, b) {
-        const levels = this.filters.order.property.split('.');
+        const levels = this.order.property.split('.');
         const getProp = obj => levels.reduce((acc, next) => acc && acc[next], obj);
         const pa = getProp(a), pb = getProp(b);
-        return pa == pb ? 0 : this.filters.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
+        return pa == pb ? 0 : this.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
       }
 
       _selectContact(event) {
@@ -362,9 +364,11 @@
       }
       _selectedContactChanged(newValue) {
         if (newValue) {
-          this.showMobileContactDetail();
+          this.hideOnMobile([this.$.fab, this.$.contactListPanel]);
+          this.showOnMobile([this.$.contactDetailPanel]);
         } else {
-          this.showMobileContactList();
+          this.hideOnMobile([this.$.contactDetailPanel]);
+          this.showOnMobile([this.$.contactListPanel, this.$.fab]);
         }
       }
       showOnMobile(elems) {
@@ -379,14 +383,7 @@
           elem.classList.remove('mobileOn');
         });
       }
-      showMobileContactList() {
-        this.hideOnMobile([this.$.contactDetailPanel]);
-        this.showOnMobile([this.$.contactListPanel, this.$.fab]);
-      }
-      showMobileContactDetail() {
-        this.hideOnMobile([this.$.fab, this.$.contactListPanel]);
-        this.showOnMobile([this.$.contactDetailPanel]);
-      }
+      
       showToast(message) {
         this.$.toast.text = message;
         this.$.toast.show();
@@ -396,11 +393,11 @@
         //fetch a new user
         this.$.ajaxNewContact.generateRequest();
       }
-      handleNewContactResponse() {
+      _handleNewContactResponse() {
         this.loading = false;
         // we assign a random group to the contact
         const group = {
-          group: this.filters.groups[Math.floor(Math.random() * this.filters.groups.length)].name
+          group: this.groups[Math.floor(Math.random() * this.groups.length)].name
         };
         this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0], group);
       }
@@ -421,7 +418,7 @@
       _removeAllFilters(event) {
         event.preventDefault();
         this.set('filters', Object.assign({}, this.defaultFilters));
-        this.filters.groups.forEach((g, index) => this.set(`filters.groups.${index}.status`, false));
+        this.groups.forEach((g, index) => this.set(`groups.${index}.status`, false));
       }
     }
 

@@ -12,6 +12,7 @@
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../../bower_components/polymer/lib/mixins/gesture-event-listeners.html">
 <link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+<link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
 
 <dom-module id="polymer-contacts-detail">
     <template>
@@ -150,6 +151,10 @@
                 width: 250px;
             }
 
+            .buttons [save-button] {
+                background-color: red;
+            }
+
             @media screen and (max-width: 768px) {
                 .bottom-toolbar {
                     position: sticky;
@@ -192,7 +197,7 @@
                     <paper-icon-button class="back-button only-mobile" icon="arrow-back" on-click="_back"></paper-icon-button>
                     <paper-icon-button class="back-button only-desktop" icon="close" on-click="_back"></paper-icon-button>
                     <div main-title>[[fullName]]</div>
-                    <paper-icon-button icon="delete" delete-button on-click="_deleteContact"></paper-icon-button>
+                    <paper-icon-button icon="delete" delete-button on-click="_confirmDeleteContact"></paper-icon-button>
                 </app-toolbar>
                 <div class="body">
                     <div class="contact-photo" style="background-image:url([[contact.picture.large]])" on-click="_editPhoto">
@@ -200,7 +205,7 @@
                     </div>
                     <iron-collapse id="photoCollapse">
                         <div class="field-row">
-                            <paper-input label="Picture" class="field flex" value="{{contact.picture.large}}"></paper-input>
+                            <paper-input label="Picture URL" class="field flex" value="{{contact.picture.large}}"></paper-input>
                         </div>
                     </iron-collapse>
                     <div class="field-row">
@@ -216,7 +221,8 @@
                         <paper-input label="Cell" class="field" value="{{contact.cell}}"></paper-input>
                     </div>
                     <div class="field-row">
-                        <paper-dropdown-menu label="Group" class="field flex" horizontal-align="left" vertical-align="top" vertical-offset="55" dynamic-align="true">
+                        <paper-dropdown-menu label="Group" class="field flex" horizontal-align="left" vertical-align="top"
+                            vertical-offset="55" dynamic-align="true">
                             <paper-listbox id="groupList" slot="dropdown-content" selected="{{selectedGroup}}">
                                 <paper-item>No group</paper-item>
                                 <template is="dom-repeat" items="{{groups}}">
@@ -232,6 +238,13 @@
                 </div>
             </div>
         </template>
+        <paper-dialog id="confirmDeleteDialog" modal>
+            <div>Do you want to delete this contact?</div>
+            <div class="buttons">
+                <paper-button dialog-dismiss>No</paper-button>
+                <paper-button raised dialog-confirm autofocus on-click="_deleteContact">Yes</paper-button>
+            </div>
+        </paper-dialog>
     </template>
 
     <script>
@@ -330,6 +343,12 @@
                 this.contact.group = this.selectedGroupName;
                 this.dispatchEvent(new CustomEvent('contact-saved', { detail: { contact: this.contact }, bubbles: true, composed: true }));
                 this.contact = undefined;
+            }
+            _confirmDeleteContact() {
+                // we attach dialog to body to display properly due to a bug, see:
+                // https://github.com/PolymerElements/paper-dialog/issues/152
+                document.body.appendChild(this.$.confirmDeleteDialog);
+                this.$.confirmDeleteDialog.open();
             }
             _deleteContact() {
                 this.dispatchEvent(new CustomEvent('contact-delete', { detail: { contact: this.contact }, bubbles: true, composed: true }));
