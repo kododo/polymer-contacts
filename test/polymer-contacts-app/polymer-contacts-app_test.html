@@ -31,10 +31,7 @@
     suite('polymer-contacts-app', function () {
 
       let basicElement, contactsElement, storage;
-      // in our fake user we use an invalid URL //:0 for user pictures to not trigger 404 calls
-      // see: https://stackoverflow.com/questions/5775469/whats-the-valid-way-to-include-an-image-with-no-src
-      const fakeResponse = '{"results":[{"gender":"female","name":{"title":"mrs","first":"emma","last":"walker"},"location":{"street":"5895 oxford terrace","city":"upper hutt","state":"northland","postcode":82036,"coordinates":{"latitude":"65.9435","longitude":"66.3333"},"timezone":{"offset":"+5:00","description":"Ekaterinburg, Islamabad, Karachi, Tashkent"}},"email":"emma.walker@example.com","login":{"uuid":"4c5b9ad8-c538-40c2-ad4a-b8d559c4bbac","username":"purpleostrich555","password":"disney","salt":"vnGaUii2","md5":"72b150a37af8ed8d614b3b32c61498f4","sha1":"9a1fe57b67fa8e9ad26d75b7ca5bcbb756a45024","sha256":"ebbddc176b95b8e978d39b4b77858764895362d3c373fdc2be89c51d685002ee"},"dob":{"date":"1989-03-28T02:48:56Z","age":29},"registered":{"date":"2008-02-13T08:02:46Z","age":10},"phone":"(672)-666-8975","cell":"(411)-846-1173","id":{"name":"","value":null},"picture":{"large":"//:0","medium":"//:0","thumbnail":"//:0"},"nat":"NZ"}],"info":{"seed":"c8c0b93b7077bc97","results":1,"page":1,"version":"1.2"}}';
-
+      
       setup(() => {
         // stub localstorage element with fake element to prevent writing to storage
         replace('app-localstorage-document').with('fake-app-localstorage-document');
@@ -50,40 +47,14 @@
         });
       });
 
-      test('adding a contact', done => {
-        // adding a contact loads a random one from the server so we need ajax
-        // first we'll setup a fake server to handle the request
-        const server = sinon.fakeServer.create();
-
-        // now we attach events to the ajax component to use our fakeServer
-        const ajax = basicElement.shadowRoot.querySelector('#ajaxNewContact');
-
-        // on request we will need to generate a response from our server
-        ajax.addEventListener('request', e => {
-          server.respond(
-            'GET',
-            /randomuser.me\/api\//, [
-              200,
-              { 'Content-Type': 'application/json' },
-              fakeResponse
-            ]
-          );
-        });
-
-        // on response we make our assertions and finish the test
-        ajax.addEventListener('response', e => {
-          // now loading finishes and new contact is automatically selected
-          expect(basicElement.loading).to.equal(false);
-          expect(basicElement.selectedContact).to.be.an('object');
-          done();
-        });
-
-        // since we didn't trigger new contact event yet the selected contact should not be set
-        expect(basicElement.selectedContact).to.not.be.ok;
-
+      test('add a contact', () => {
         // now we trigger the test by clicking our FAB for a new contact
+        expect(basicElement.selectedContact).to.not.be.ok;
         basicElement.shadowRoot.querySelector('#fab').click();
+        expect(basicElement.selectedContact).to.be.ok;
       });
+
+      
 
       test('filtering the list by name', done => {
         // we load our contact from localstorage

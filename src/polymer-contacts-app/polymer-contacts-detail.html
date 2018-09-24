@@ -1,18 +1,29 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<!-- app layout and styling -->
 <link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/app-layout/app-box/app-box.html">
+<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+
+<!-- general components -->
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/image-icons.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../../bower_components/app-layout/app-box/app-box.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../../bower_components/polymer/lib/mixins/gesture-event-listeners.html">
-<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
 <link rel="import" href="../../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
+<link rel="import" href="../../bower_components/paper-tooltip/paper-tooltip.html">
+
+<!-- helper elements -->
+<link rel="import" href="../../bower_components/polymer/lib/mixins/gesture-event-listeners.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/polymer/lib/utils/flush.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 
 <dom-module id="polymer-contacts-detail">
     <template>
@@ -139,10 +150,6 @@
                 margin-right: 10px;
             }
 
-            [delete-button] {
-                float: right;
-            }
-
             [main-title] {
                 @apply --layout-flex;
             }
@@ -153,6 +160,19 @@
 
             .buttons [save-button] {
                 background-color: red;
+            }
+
+            .loading {
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 2;
+                background-color: #fff;
+                opacity: 0.5;
+                width: 100%;
+                height: 100%;
+                text-align: center;
+                padding-top: 30%;
             }
 
             @media screen and (max-width: 768px) {
@@ -185,6 +205,7 @@
             }
         </style>
 
+        <!-- empty contact fallback -->
         <template is="dom-if" if="{{empty}}">
             <div class="empty-icon">
                 <iron-icon icon="perm-contact-calendar"></iron-icon>
@@ -193,13 +214,25 @@
         </template>
         <template is="dom-if" if="{{!empty}}">
             <div class="contact-edit-form">
+                <!-- loading layer -->
+                <template is="dom-if" if="{{loading}}">
+                    <div class="loading">
+                        <paper-spinner style="zoom:2.5" active="[[loading]]"></paper-spinner>
+                    </div>
+                </template>
+                <!-- this panel has its own toolbar/header to allow scrolling -->
                 <app-toolbar style="max-width: 1024px; margin: 0 auto">
                     <paper-icon-button class="back-button only-mobile" icon="arrow-back" on-click="_back"></paper-icon-button>
                     <paper-icon-button class="back-button only-desktop" icon="close" on-click="_back"></paper-icon-button>
                     <div main-title>[[fullName]]</div>
-                    <paper-icon-button icon="delete" delete-button on-click="_confirmDeleteContact"></paper-icon-button>
+                    <!-- buttons to randomize/delete the contact -->
+                    <paper-icon-button id="randomizeButton" randomize-button icon="refresh" on-click="_randomizeContact"></paper-icon-button>
+                    <paper-tooltip for="randomizeButton">Randomize Contact</paper-tooltip>
+                    <paper-icon-button id="deleteButton" delete-button icon="delete" on-click="_confirmDeleteContact"></paper-icon-button>
+                    <paper-tooltip for="deleteButton">Delete</paper-tooltip>
                 </app-toolbar>
                 <div class="body">
+                    <!-- the actual form with its fields -->
                     <div class="contact-photo" style="background-image:url([[contact.picture.large]])" on-click="_editPhoto">
                         <iron-icon icon="image:photo-camera"></iron-icon>
                     </div>
@@ -208,10 +241,6 @@
                             <paper-input label="Picture URL" class="field flex" value="{{contact.picture.large}}"></paper-input>
                         </div>
                     </iron-collapse>
-                    <div class="field-row">
-                        <paper-input label="Gender" class="field" value="{{contact.gender}}"></paper-input>
-                        <paper-input label="Title" class="field" value="{{contact.name.title}}"></paper-input>
-                    </div>
                     <div class="field-row">
                         <paper-input label="First Name" class="field" value="{{contact.name.first}}"></paper-input>
                         <paper-input label="Last Name" class="field" value="{{contact.name.last}}"></paper-input>
@@ -231,13 +260,19 @@
                             </paper-listbox>
                         </paper-dropdown-menu>
                     </div>
+                    <div class="field-row">
+                        <paper-input label="Gender" class="field" value="{{contact.gender}}"></paper-input>
+                        <paper-input label="Title" class="field" value="{{contact.name.title}}"></paper-input>
+                    </div>
                 </div>
+                <!-- main buttons bottom toolbar -->
                 <div class="layout horizontal end-justified bottom-toolbar">
                     <paper-button cancel-button on-click="_back">Cancel</paper-button>
                     <paper-button raised save-button on-click="_save">Save</paper-button>
                 </div>
             </div>
         </template>
+        <!-- dialog to confirm contact deletion -->
         <paper-dialog id="confirmDeleteDialog" modal>
             <div>Do you want to delete this contact?</div>
             <div class="buttons">
@@ -245,6 +280,9 @@
                 <paper-button raised dialog-confirm autofocus on-click="_deleteContact">Yes</paper-button>
             </div>
         </paper-dialog>
+        <!-- ajax to randomize data from randomuser.me -->
+        <iron-ajax loading="{{loading}}" id="ajaxNewContact" on-error="_handleNewContactError" on-response="_handleNewContactResponse"
+            handle-as="json" url="https://randomuser.me/api/"></iron-ajax>
     </template>
 
     <script>
@@ -272,7 +310,8 @@
                         computed: '_fullName(contact.name.first, contact.name.last)'
                     },
                     groups: {
-                        type: Array
+                        type: Array,
+                        value: () => []
                     },
                     selectedGroup: {
                         type: Number,
@@ -312,8 +351,34 @@
                 }
             }
 
-            _getGroupName(selectedGroup) {
-                return selectedGroup == 0 ? '' : this.groups[selectedGroup - 1].name;
+            // Observers
+
+            _contactChanged() {
+                if (!this.contact) {
+                    return;
+                }
+
+                // since the template is dom-if we call flush to make sure it's rendered
+                Polymer.flush();
+
+                // initial state
+                this.shadowRoot.querySelector("#photoCollapse").hide();
+                this.shadowRoot.querySelector('.contact-photo').classList.remove('empty-photo');
+
+                // callback to activate photo editor
+                const noPhoto = () => {
+                    this.shadowRoot.querySelector('.contact-photo').classList.add('empty-photo');
+                    this._editPhoto();
+                }
+
+                // will be called if picture fails loading or there is no picture
+                if (this.contact.picture && this.contact.picture.large) {
+                    const img = new Image();
+                    img.addEventListener("error", noPhoto);
+                    img.src = this.contact.picture.large;
+                } else {
+                    noPhoto();
+                }
             }
 
             _groupsChanged(groups, contact) {
@@ -329,48 +394,76 @@
                     this.selectedGroup = index;
                 }
             }
+
+            // component actions
+
             _back() {
                 this.contact = undefined;
                 this.dispatchEvent(new CustomEvent('close-clicked', { bubbles: true, composed: true }));
             }
-            _isEmpty(contact) {
-                return !(contact && Object.keys(contact).length);
-            }
-            _fullName() {
-                return [].slice.call(arguments).map(s => s ? s.charAt(0).toUpperCase() + s.substr(1) : '').join(' ');
-            }
+
             _save() {
                 this.contact.group = this.selectedGroupName;
                 this.dispatchEvent(new CustomEvent('contact-saved', { detail: { contact: this.contact }, bubbles: true, composed: true }));
                 this.contact = undefined;
             }
+
+            _editPhoto() {
+                this.shadowRoot.querySelector("#photoCollapse").show();
+            }
+
+            // computed properties
+
+            _isEmpty(contact) {
+                return !(contact && Object.keys(contact).length);
+            }
+
+            _fullName(firstName, lastName) {
+                if (!firstName && !lastName) {
+                    return "New Contact";
+                }
+                const capitalize = s => s.charAt(0).toUpperCase() + s.substr(1);
+                return [firstName, lastName].map(capitalize).join(' ');
+            }
+
+            _getGroupName(selectedGroup) {
+                // position 0 is 'no group' option
+                return selectedGroup == 0 ? '' : this.groups[selectedGroup - 1].name;
+            }
+            
+            // button callbacks
+
             _confirmDeleteContact() {
                 // we attach dialog to body to display properly due to a bug, see:
                 // https://github.com/PolymerElements/paper-dialog/issues/152
                 document.body.appendChild(this.$.confirmDeleteDialog);
                 this.$.confirmDeleteDialog.open();
             }
+
             _deleteContact() {
                 this.dispatchEvent(new CustomEvent('contact-delete', { detail: { contact: this.contact }, bubbles: true, composed: true }));
             }
-            _editPhoto() {
-                this.shadowRoot.querySelector("#photoCollapse").show();
+
+            _randomizeContact() {
+                this.$.ajaxNewContact.generateRequest();
             }
-            _contactChanged() {
-                const photoCollapse = this.shadowRoot.querySelector("#photoCollapse");
-                photoCollapse && photoCollapse.hide();
-                const contactPhoto = this.shadowRoot.querySelector('.contact-photo');
-                contactPhoto && contactPhoto.classList.remove('empty-photo');
-                if (!this.contact) {
-                    return;
+
+            // ajax handlers
+
+            _handleNewContactResponse() {
+                // we assign a random group to the contact
+                const group = {};
+                if (this.groups.length) {
+                    group.group = this.groups[Math.floor(Math.random() * this.groups.length)].name;
                 }
-                const img = new Image();
-                img.addEventListener("error", () => {
-                    this.shadowRoot.querySelector('.contact-photo').classList.add('empty-photo');
-                    this._editPhoto();
-                });
-                img.src = this.contact.picture.large;
+
+                this.contact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0], group);
             }
+            
+            _handleNewContactError() {
+                this.dispatchEvent(new CustomEvent('request-error', { detail: { message: 'Error requesting randomized user data!' }, bubbles: true, composed: true }));
+            }
+
         }
 
         window.customElements.define(PolymerContactsDetail.is, PolymerContactsDetail);

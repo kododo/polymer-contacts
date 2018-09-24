@@ -1,9 +1,15 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<!-- app layout and styling -->
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+<!-- general components -->
 <link rel="import" href="../../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../../bower_components/paper-chip/paper-chip.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 
+<!-- helper elements -->
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 
 <dom-module id="polymer-contacts-contact">
   <template>
@@ -78,21 +84,21 @@
           },
           fullName: {
             type: String,
-            computed: '__computedFullName(contact.name.first,contact.name.last)'
+            computed: '_computedFullName(contact.name.first,contact.name.last)'
           },
           firstLetter: {
             type: String,
-            computed: '__firstLetter(contact.name.first)'
+            computed: '_firstLetter(contact.name.first)'
           }
         };
       }
       connectedCallback() {
         super.connectedCallback();
       }
-      __computedFullName() {
+      _computedFullName() {
         return [].slice.call(arguments).map(s => s && s.charAt(0).toUpperCase() + s.substr(1)).join(' ');
       }
-      __firstLetter(name) {
+      _firstLetter(name) {
         return name && name.charAt(0).toUpperCase();
       }
     }

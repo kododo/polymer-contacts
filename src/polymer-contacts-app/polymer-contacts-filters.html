@@ -1,11 +1,18 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
+
+<!-- app layout and styling -->
+<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
+
+<!-- general components -->
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../../bower_components/iron-collapse/iron-collapse.html">
-<link rel="import" href="../../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<!-- helper elements -->
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
 
 <dom-module id="polymer-contacts-filters">
     <template>
@@ -88,16 +95,20 @@
             }
         </style>
         <div class="searcher-container ">
+            <!-- the search bar -->
             <div class="layout horizontal center">
                 <iron-icon class="flex search-icon" icon="search"></iron-icon>
                 <div class="search-paper-input-wrapper flex-10">
                     <paper-input label="Search by name" no-label-float value="{{filters.name}}"></paper-input>
                 </div>
+                <!-- empties search input -->
                 <paper-icon-button on-click="_removeFilters" class="remove-search-icon" data-filter="name" icon="cancel" disabled="[[!filters.name]]"></paper-icon-button>
+                <!-- toggles more options to display -->
                 <paper-icon-button on-click="_toggleFilters" data-filter="name" icon="more-vert"></paper-icon-button>
             </div>
             <iron-collapse id="filters-collapse" style="width:100%;">
                 <div class="filter-container">
+                    <!-- controls to filter by contact title -->
                     <div title>Filter by title</div>
                     <div filters>
                         <iron-input class="flex" bind-value="{{filters.title}}"><input class="input-title" type="text"
@@ -108,6 +119,7 @@
                 </div>
 
                 <div class="filter-container">
+                    <!-- controls to filter by group -->
                     <div title>Filter by group</div>
                     <div filters>
                         <div class="flex">
@@ -121,6 +133,7 @@
                 </div>
 
                 <div class="filter-container">
+                    <!-- controls to change list order -->
                     <div title>Order by</div>
                     <div filters>
                         <paper-button on-click="_changeOrder" data-order="name.first">First Name</paper-button>
@@ -150,10 +163,6 @@
                         computed: '_disableGroupButtons(groups.*)'
                     }
                 };
-            }
-            connectedCallback(){
-                super.connectedCallback();
-                console.log(this.groups);
             }
             static get observers(){
                 return [

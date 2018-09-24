@@ -13,14 +13,12 @@
 <link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../../bower_components/paper-toast/paper-toast.html">
-<link rel="import" href="../../bower_components/paper-spinner/paper-spinner.html">
 
 <!-- icons -->
 <link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../../bower_components/iron-icons/image-icons.html">
 
 <!-- helper elements -->
-<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../../bower_components/app-storage/app-localstorage/app-localstorage-document.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
@@ -98,17 +96,6 @@
         display: none;
       }
 
-      .loading {
-        position: fixed;
-        z-index: 1;
-        background-color: #fff;
-        opacity: 0.5;
-        width: 100%;
-        text-align: center;
-        height: 100%;
-        padding-top: 30%;
-      }
-
       .empty-contacts {
         text-align: center;
         margin: 50px auto;
@@ -171,21 +158,16 @@
       }
     </style>
     <app-header-layout>
+      <!-- main app header -->
       <app-header slot="header" fixed condenses effects="waterfall">
         <app-toolbar style="max-width: 1024px; margin: 0 auto">
           <div main-title>
             <iron-icon style="vertical-align: bottom;margin-right:10px;" icon="polymer"></iron-icon>Simple Contacts App
           </div>
+          <!-- opens theme dialog -->
           <paper-icon-button icon="image:color-lens" on-click="_openColorDialog"></paper-icon-button>
         </app-toolbar>
       </app-header>
-
-      <!-- loading layer -->
-      <template is="dom-if" if="[[loading]]">
-        <div class="loading">
-          <paper-spinner style="zoom:2.5" active="[[loading]]"></paper-spinner>
-        </div>
-      </template>
 
       <div id="body">
         <div class="layout horizontal">
@@ -195,13 +177,16 @@
             <polymer-contacts-filters filters="{{filters}}" groups="{{groups}}" order="{{order}}"></polymer-contacts-filters>
             <!-- contacts list -->
             <div role="listbox" class="contact-list">
+              <!-- empty list fallback -->
               <template is="dom-if" if="[[!contacts.length]]">
                 <div class="empty-contacts">Your contacts list is empty :(</div>
               </template>
+              <!-- the list -->
               <template id="contactListRepeat" is="dom-repeat" items="{{contacts}}" filter="_filterContactList" sort="_sortContactList"
                 on-rendered-item-count-changed="_listRendered">
                 <polymer-contacts-contact on-click="_selectContact" contact="{{item}}"></polymer-contacts-contact>
               </template>
+              <!-- info about filtered out contacts -->
               <template is="dom-if" if="{{hiddenContacts}}">
                 <div class="hidden-contacts"><b>[[hiddenContacts]]</b> more contacts don't match the filters<br /><a
                     href="void(0)" on-click="_removeAllFilters">Remove all filters</a></div>
@@ -210,10 +195,11 @@
           </div>
           <!-- right app panel, with contact detail -->
           <div id="contactDetailPanel" class="main-app-panel contact-detail-container">
-            <polymer-contacts-detail on-contact-delete="_deleteContact" on-close-clicked="_deselectContact"
-              on-contact-saved="_saveContact" contact="{{selectedContact}}" groups="[[groups]]"></polymer-contacts-detail>
+            <polymer-contacts-detail on-request-error="_newContactRequestError" on-contact-delete="_deleteContact"
+              on-close-clicked="_deselectContact" on-contact-saved="_saveContact" contact="{{selectedContact}}" groups="[[groups]]"></polymer-contacts-detail>
           </div>
         </div>
+        <!-- app fab button -->
         <paper-fab elevation="3" id="fab" on-click="_newContact" icon="add"></paper-fab>
       </div>
     </app-header-layout>
@@ -221,9 +207,8 @@
     <!-- theme selector popup dialog -->
     <polymer-contacts-theme-selector id="themeSelector" theme="{{theme}}"></polymer-contacts-theme-selector>
 
-    <!-- app helpers: toasts, ajax, etc -->
+    <!-- app helpers: toasts, localstorage, etc -->
     <paper-toast id="toast"></paper-toast>
-    <iron-ajax id="ajaxNewContact" on-response="_handleNewContactResponse" handle-as="json" url="https://randomuser.me/api/"></iron-ajax>
     <app-localstorage-document key="contacts" data="{{contacts}}"></app-localstorage-document>
     <app-localstorage-document key="theme" data="{{theme}}"></app-localstorage-document>
 
@@ -238,7 +223,6 @@
       static get is() { return 'polymer-contacts-app'; }
       static get properties() {
         return {
-          loading: Boolean,
           groups: {
             type: Array,
             value: () => [
@@ -256,9 +240,7 @@
             value: undefined,
             observer: '_selectedContactChanged'
           },
-          theme: {
-            type: Object,
-          },
+          theme: Object,
           filters: {
             type: Object,
             value: () => ({})
@@ -292,25 +274,55 @@
         };
       }
 
-      _themeChanged(change) {
-        function getContrastYIQ(hexcolor) {
-          var r = parseInt(hexcolor.substr(1, 2), 16);
-          var g = parseInt(hexcolor.substr(2, 2), 16);
-          var b = parseInt(hexcolor.substr(4, 2), 16);
-          var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-          return (yiq >= 128) ? '#000' : '#fff';
+      _selectedContactChanged(newValue) {
+        if (newValue) {
+          this.hideOnMobile([this.$.fab, this.$.contactListPanel]);
+          this.showOnMobile([this.$.contactDetailPanel]);
+        } else {
+          this.hideOnMobile([this.$.contactDetailPanel]);
+          this.showOnMobile([this.$.contactListPanel, this.$.fab]);
         }
+      }
 
-        //Calculate the fonts based on contrast
-        this.updateStyles({
-          '--polymer-contacts-app-primary-color': this.theme.primaryColor,
-          '--polymer-contacts-app-accent-color': this.theme.accentColor,
-          '--polymer-contacts-app-secondary-color': this.theme.secondaryColor,
-          '--polymer-contacts-app-primary-color-font': getContrastYIQ(this.theme.primaryColor),
-          '--polymer-contacts-app-accent-color-font': getContrastYIQ(this.theme.accentColor),
-          '--polymer-contacts-app-secondary-color-font': getContrastYIQ(this.theme.secondaryColor)
-        });
+      // Contact logic methods
 
+      _newContact() {
+        // create an empty user
+        this.selectedContact = {
+          name: {},
+          picture: {}
+        };
+      }
+
+      _selectContact(event) {
+        this.selectedContact = event.target.contact;
+      }
+
+      _deselectContact() {
+        this.selectedContact = undefined;
+      }
+
+      // Contact dom-repeater filters, sorters and helpers
+
+      _listRendered(event) {
+        this.hiddenContacts = this.contacts.length - event.currentTarget.renderedItemCount;
+      }
+
+      _removeAllFilters(event) {
+        event.preventDefault();
+        this.set('filters', Object.assign({}, this.defaultFilters));
+        this.groups.forEach((g, index) => this.set(`groups.${index}.status`, false));
+      }
+
+      _renderList() {
+        this.$.contactListRepeat.render();
+      }
+
+      _sortContactList(a, b) {
+        const levels = this.order.property.split('.');
+        const getProp = obj => levels.reduce((acc, next) => acc && acc[next], obj);
+        const pa = getProp(a), pb = getProp(b);
+        return pa == pb ? 0 : this.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
       }
 
       _filterContactList(item) {
@@ -333,22 +345,22 @@
 
         return true;
       }
-      _renderList() {
-        this.$.contactListRepeat.render();
-      }
-      _sortContactList(a, b) {
-        const levels = this.order.property.split('.');
-        const getProp = obj => levels.reduce((acc, next) => acc && acc[next], obj);
-        const pa = getProp(a), pb = getProp(b);
-        return pa == pb ? 0 : this.order.ascending ? (pa > pb ? 1 : -1) : (pa > pb ? -1 : 1);
+
+      // Callbacks for polymer-contacts-detail element:
+
+      _deleteContact() {
+        const index = this.contacts.indexOf(this.selectedContact);
+        if (index != -1) {
+          this.splice('contacts', index, 1);
+          this.showToast('Contact deleted');
+        }
+        this._deselectContact();
       }
 
-      _selectContact(event) {
-        this.selectedContact = event.target.contact;
+      _newContactRequestError(event) {
+        this.showToast(event.detail.message);
       }
-      _deselectContact() {
-        this.selectedContact = undefined;
-      }
+
       _saveContact(event) {
         const index = this.contacts.indexOf(this.selectedContact);
         if (index == -1) {
@@ -362,64 +374,55 @@
         this.showToast('Contact saved');
         this._deselectContact();
       }
-      _selectedContactChanged(newValue) {
-        if (newValue) {
-          this.hideOnMobile([this.$.fab, this.$.contactListPanel]);
-          this.showOnMobile([this.$.contactDetailPanel]);
-        } else {
-          this.hideOnMobile([this.$.contactDetailPanel]);
-          this.showOnMobile([this.$.contactListPanel, this.$.fab]);
-        }
+
+      // Theme selector callbacks
+
+      _openColorDialog() {
+        this.$.themeSelector.open();
       }
+
+      _themeChanged(change) {
+        console.log("change", change);
+        function getContrastYIQ(hexcolor) {
+          var r = parseInt(hexcolor.substr(1, 2), 16);
+          var g = parseInt(hexcolor.substr(2, 2), 16);
+          var b = parseInt(hexcolor.substr(4, 2), 16);
+          var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+          return (yiq >= 128) ? '#000' : '#fff';
+        }
+
+        //Calculate the fonts based on contrast
+        this.updateStyles({
+          '--polymer-contacts-app-primary-color': this.theme.primaryColor,
+          '--polymer-contacts-app-accent-color': this.theme.accentColor,
+          '--polymer-contacts-app-secondary-color': this.theme.secondaryColor,
+          '--polymer-contacts-app-primary-color-font': getContrastYIQ(this.theme.primaryColor),
+          '--polymer-contacts-app-accent-color-font': getContrastYIQ(this.theme.accentColor),
+          '--polymer-contacts-app-secondary-color-font': getContrastYIQ(this.theme.secondaryColor)
+        });
+      }
+
+      // Presentation and UI methods
+
       showOnMobile(elems) {
         elems.forEach(elem => {
           elem.classList.add('mobileOn');
           elem.classList.remove('mobileOff');
         });
       }
+
       hideOnMobile(elems) {
         elems.forEach(elem => {
           elem.classList.add('mobileOff');
           elem.classList.remove('mobileOn');
         });
       }
-      
+
       showToast(message) {
         this.$.toast.text = message;
         this.$.toast.show();
       }
-      _newContact() {
-        this.loading = true;
-        //fetch a new user
-        this.$.ajaxNewContact.generateRequest();
-      }
-      _handleNewContactResponse() {
-        this.loading = false;
-        // we assign a random group to the contact
-        const group = {
-          group: this.groups[Math.floor(Math.random() * this.groups.length)].name
-        };
-        this.selectedContact = Object.assign({}, this.$.ajaxNewContact.lastResponse.results[0], group);
-      }
-      _openColorDialog() {
-        this.$.themeSelector.open();
-      }
-      _deleteContact() {
-        const index = this.contacts.indexOf(this.selectedContact);
-        if (index != -1) {
-          this._deselectContact();
-          this.splice('contacts', index, 1);
-          this.showToast('Contact deleted');
-        }
-      }
-      _listRendered(event) {
-        this.hiddenContacts = this.contacts.length - event.currentTarget.renderedItemCount;
-      }
-      _removeAllFilters(event) {
-        event.preventDefault();
-        this.set('filters', Object.assign({}, this.defaultFilters));
-        this.groups.forEach((g, index) => this.set(`groups.${index}.status`, false));
-      }
+
     }
 
     window.customElements.define(PolymerContactsApp.is, PolymerContactsApp);
