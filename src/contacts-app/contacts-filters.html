@@ -14,7 +14,7 @@
 <!-- helper elements -->
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
 
-<dom-module id="polymer-contacts-filters">
+<dom-module id="contacts-filters">
     <template>
         <style include="iron-flex iron-flex-factors iron-flex-alignment">
             :host {
@@ -22,7 +22,7 @@
             }
 
             .searcher-container {
-                background-color: var(--polymer-contacts-app-background-color);
+                background-color: var(--contacts-app-background-color);
                 margin: 10px;
                 border-radius: 24px;
                 padding: 5px 9px 5px 5px;
@@ -66,7 +66,7 @@
 
             #filters-collapse {
                 position: relative;
-                background-color: var(--polymer-contacts-app-background-color);
+                background-color: var(--contacts-app-background-color);
             }
             .input-title{
                 background-color: transparent;
@@ -85,13 +85,13 @@
                 background-color: transparent;
             }
             paper-button[data-order][raised]{
-                background-color: var(--polymer-contacts-app-accent-color);
-                color: var(--polymer-contacts-app-accent-color-font);
+                background-color: var(--contacts-app-accent-color);
+                color: var(--contacts-app-accent-color-font);
             }
             paper-checkbox{
-                --paper-checkbox-checked-color:	var(--polymer-contacts-app-accent-color);
-                --paper-checkbox-checked-ink-color: var(--polymer-contacts-app-accent-color);
-                --paper-checkbox-checkmark-color: var(--polymer-contacts-app-accent-color-font)
+                --paper-checkbox-checked-color:	var(--contacts-app-accent-color);
+                --paper-checkbox-checked-ink-color: var(--contacts-app-accent-color);
+                --paper-checkbox-checkmark-color: var(--contacts-app-accent-color-font)
             }
         </style>
         <div class="searcher-container ">
@@ -151,8 +151,8 @@
          * @customElement
          * @polymer
          */
-        class PolymerContactsFilters extends Polymer.Element {
-            static get is() { return 'polymer-contacts-filters'; }
+        class ContactsFilters extends Polymer.Element {
+            static get is() { return 'contacts-filters'; }
             static get properties() {
                 return {
                     filters: Object,
@@ -216,6 +216,6 @@
             }
         }
 
-        window.customElements.define(PolymerContactsFilters.is, PolymerContactsFilters);
+        window.customElements.define(ContactsFilters.is, ContactsFilters);
     </script>
 </dom-module>

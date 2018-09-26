@@ -25,7 +25,7 @@
 <link rel="import" href="../../bower_components/polymer/lib/utils/flush.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 
-<dom-module id="polymer-contacts-detail">
+<dom-module id="contacts-detail">
     <template>
         <style include="iron-flex iron-flex-alignment">
             :host {
@@ -41,7 +41,7 @@
                 width: 120px;
                 height: 120px;
                 border-radius: 60px;
-                color: var(--polymer-contacts-app-secondary-color);
+                color: var(--contacts-app-secondary-color);
                 text-align: center;
                 line-height: 120px;
                 cursor: pointer;
@@ -69,7 +69,7 @@
             .contact-photo.empty-photo::before {
                 content: '';
                 position: absolute;
-                background-color: var(--polymer-contacts-app-secondary-color);
+                background-color: var(--contacts-app-secondary-color);
                 opacity: 0.3;
                 width: 100%;
                 height: 100%;
@@ -83,14 +83,14 @@
             }
 
             .contact-edit-form {
-                background: var(--polymer-contacts-app-background-color);
+                background: var(--contacts-app-background-color);
                 height: calc(100vh - 64px);
                 position: relative;
             }
 
             app-toolbar {
-                background-color: var(--polymer-contacts-app-secondary-color);
-                color: var(--polymer-contacts-app-secondary-color-font);
+                background-color: var(--contacts-app-secondary-color);
+                color: var(--contacts-app-secondary-color-font);
             }
 
             .field-row {
@@ -103,7 +103,7 @@
             }
 
             .empty-icon {
-                background-color: var(--polymer-contacts-app-background-color);
+                background-color: var(--contacts-app-background-color);
                 width: 100px;
                 height: 100px;
                 border-radius: 50px;
@@ -127,8 +127,8 @@
             }
 
             paper-button[save-button] {
-                background-color: var(--polymer-contacts-app-secondary-color);
-                color: var(--polymer-contacts-app-secondary-color-font);
+                background-color: var(--contacts-app-secondary-color);
+                color: var(--contacts-app-secondary-color-font);
             }
 
             .bottom-toolbar {
@@ -138,7 +138,7 @@
                 padding: 15px;
                 box-sizing: border-box;
                 z-index: 1;
-                background-color: var(--polymer-contacts-app-background-color);
+                background-color: var(--contacts-app-background-color);
             }
 
             .body {
@@ -290,8 +290,8 @@
          * @customElement
          * @polymer
          */
-        class PolymerContactsDetail extends Polymer.GestureEventListeners(Polymer.Element) {
-            static get is() { return 'polymer-contacts-detail'; }
+        class ContactsDetail extends Polymer.GestureEventListeners(Polymer.Element) {
+            static get is() { return 'contacts-detail'; }
             static get properties() {
                 return {
                     contact: {
@@ -382,17 +382,12 @@
             }
 
             _groupsChanged(groups, contact) {
-                if (groups && contact) {
-                    let index = 0;
-                    if (contact.group) {
-                        groups.forEach((group, groupIndex) => {
-                            if (group.name == contact.group) {
-                                index = groupIndex + 1;
-                            }
-                        });
-                    }
-                    this.selectedGroup = index;
+                let index = 0;
+                if (groups && contact && contact.group) {
+
+                    index = groups.findIndex(group => group.name == contact.group) + 1;
                 }
+                this.selectedGroup = index;
             }
 
             // component actions
@@ -466,6 +461,6 @@
 
         }
 
-        window.customElements.define(PolymerContactsDetail.is, PolymerContactsDetail);
+        window.customElements.define(ContactsDetail.is, ContactsDetail);
     </script>
 </dom-module>

@@ -10,7 +10,7 @@
 <link rel="import" href="../../bower_components/paper-button/paper-button.html">
 
 
-<dom-module id="polymer-contacts-theme-selector">
+<dom-module id="contacts-theme-selector">
     <template>
         <style include="iron-flex iron-flex-factors iron-flex-alignment">
             :host {
@@ -21,8 +21,8 @@
                 color: #000;
             }
             paper-button[raised] {
-                background-color: var(--polymer-contacts-app-accent-color);
-                color: var(--polymer-contacts-app-accent-color-font);
+                background-color: var(--contacts-app-accent-color);
+                color: var(--contacts-app-accent-color-font);
             }
             .selector{
                 text-align: center;
@@ -30,16 +30,16 @@
                 padding: 5px 12px;
             }
             .primary{
-                background-color:var(--polymer-contacts-app-primary-color);
-                color:var(--polymer-contacts-app-primary-color-font);
+                background-color:var(--contacts-app-primary-color);
+                color:var(--contacts-app-primary-color-font);
             }
             .secondary{
-                background-color:var(--polymer-contacts-app-secondary-color);
-                color:var(--polymer-contacts-app-secondary-color-font);
+                background-color:var(--contacts-app-secondary-color);
+                color:var(--contacts-app-secondary-color-font);
             }
             .accent{
-                background-color:var(--polymer-contacts-app-accent-color);
-                color:var(--polymer-contacts-app-accent-color-font);
+                background-color:var(--contacts-app-accent-color);
+                color:var(--contacts-app-accent-color-font);
             }
         </style>
 
@@ -75,8 +75,8 @@
          * @customElement
          * @polymer
          */
-        class PolymerContactsThemeSelector extends Polymer.Element {
-            static get is() { return 'polymer-contacts-theme-selector'; }
+        class ContactsThemeSelector extends Polymer.Element {
+            static get is() { return 'contacts-theme-selector'; }
             static get properties() {
                 return {
                     theme: {
@@ -89,6 +89,6 @@
             }
         }
 
-        window.customElements.define(PolymerContactsThemeSelector.is, PolymerContactsThemeSelector);
+        window.customElements.define(ContactsThemeSelector.is, ContactsThemeSelector);
     </script>
 </dom-module>

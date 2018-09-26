@@ -11,7 +11,7 @@
 <!-- helper elements -->
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-if.html">
 
-<dom-module id="polymer-contacts-contact">
+<dom-module id="contacts-contact">
   <template>
     <style include="iron-flex iron-flex-alignment">
       :host {
@@ -46,8 +46,8 @@
       }
 
       paper-chip {
-        --paper-chip-secondary-text-color: var(--polymer-contacts-app-secondary-color-font);
-        --paper-chip-background-color: var(--polymer-contacts-app-secondary-color);
+        --paper-chip-secondary-text-color: var(--contacts-app-secondary-color-font);
+        --paper-chip-background-color: var(--contacts-app-secondary-color);
       }
     </style>
     <paper-icon-item>
@@ -75,8 +75,8 @@
      * @customElement
      * @polymer
      */
-    class PolymerContactsContact extends Polymer.Element {
-      static get is() { return 'polymer-contacts-contact'; }
+    class ContactsContact extends Polymer.Element {
+      static get is() { return 'contacts-contact'; }
       static get properties() {
         return {
           contact: {
@@ -95,14 +95,15 @@
       connectedCallback() {
         super.connectedCallback();
       }
-      _computedFullName() {
-        return [].slice.call(arguments).map(s => s && s.charAt(0).toUpperCase() + s.substr(1)).join(' ');
+      _computedFullName(firstName,lastName) {
+        return [firstName,lastName].map(s => s && s.charAt(0).toUpperCase() + s.substr(1)).join(' ');
       }
       _firstLetter(name) {
+        // gets first letter to show if no image
         return name && name.charAt(0).toUpperCase();
       }
     }
 
-    window.customElements.define(PolymerContactsContact.is, PolymerContactsContact);
+    window.customElements.define(ContactsContact.is, ContactsContact);
   </script>
 </dom-module>
