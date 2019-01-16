@@ -338,9 +338,12 @@
         if (this.filters.title && item.name.title.toLowerCase() != this.filters.title.toLowerCase()) {
           return false;
         }
-        if (this.filters.name && (item.name.first.toLowerCase() + item.name.last.toLowerCase()).indexOf(this.filters.name.toLowerCase()) == -1) {
+
+        // add name filter
+        if (this.filters.name && !item.name.first.toLowerCase().includes(this.filters.name.toLowerCase()) ) {
           return false;
         }
+
         if (this.groups && this.groups.some(fg => fg.status == true)) {
           // if any group filter is set we check
           if (!item.group) {
